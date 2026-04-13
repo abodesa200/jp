@@ -1,0 +1,54 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  // id         String  @id @default(uuid())
+  id         Int     @id @default(autoincrement())
+  phone      String  @unique
+  role       Role    @default(USER)
+  isVerified Boolean @default(false)
+
+  name      String?
+  email     String?  @unique
+  driver    Driver?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Driver {
+  id            String  @id @default(uuid())
+  userId        Int     @unique
+  user          User    @relation(fields: [userId], references: [id])
+  email         String?
+  licenseNumber String
+  carModel      String
+  carPlate      String
+  isApproved    Boolean @default(false)
+}
+
+model OtpCode {
+  id        String   @id @default(uuid())
+  phone     String
+  code      String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  attempts  Int      @default(0)
+
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  USER
+  DRIVER
+}
