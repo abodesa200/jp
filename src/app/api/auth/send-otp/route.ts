@@ -1,55 +1,73 @@
 import { prisma } from "@/lib/prisma";
+import { hashOtp } from "@/services/auth/otp";
+import { sendOtpEmail } from "@/services/auth/resend";
 
 export async function POST(req: Request) {
     try {
-        const { phone } = await req.json();
+        const { email, appContext } = await req.json();
 
-        if (!phone || !/^\+?[0-9]{10,15}$/.test(phone)) {
-            return Response.json({ error: "Invalid phone number" }, { status: 400 });
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            return Response.json({ error: "Invalid email" }, { status: 400 });
         }
 
-        const lastOtp = await prisma.otpCode.findFirst({
-            where: {
-                phone,
-                createdAt: { gte: new Date(Date.now() - 10 * 60 * 1000) },
-            },
-            orderBy: { createdAt: "desc" },
+        if (!appContext || !["client", "driver"].includes(appContext)) {
+            return Response.json({ error: "Invalid appContext" }, { status: 400 });
+        }
+
+        // driver لازم يكون موجود ومعتمد مسبقاً من الأدمن
+        if (appContext === "driver") {
+            const user = await prisma.user.findUnique({
+                where: { email },
+                include: { driver: true },
+            });
+
+            if (!user || user.role !== "DRIVER" || !user.driver) {
+                return Response.json({ error: "No driver account found" }, { status: 404 });
+            }
+
+            if (!user.driver.isApproved) {
+                return Response.json({ error: "Driver account pending approval" }, { status: 403 });
+            }
+        }
+
+        // منع إرسال OTP إذا في واحد شغال
+        const activeOtp = await prisma.otpCode.findFirst({
+            where: { email, used: false, expiresAt: { gt: new Date() } },
         });
 
-        const recentOtps = await prisma.otpCode.count({
-            where: {
-                phone,
-                createdAt: { gte: new Date(Date.now() - 10 * 60 * 1000) },
-            },
-        });
-
-        if (recentOtps >= 3) {
-            const retryAfterMs = lastOtp
-                ? 10 * 60 * 1000 - (Date.now() - new Date(lastOtp.createdAt).getTime())
-                : 0;
+        if (activeOtp) {
+            const secondsLeft = Math.ceil((activeOtp.expiresAt.getTime() - Date.now()) / 1000);
             return Response.json(
-                {
-                    error: "Too many attempts, try again later",
-                    retryAfterSeconds: Math.ceil(retryAfterMs / 1000),
-                },
+                { error: "OTP already sent", retryAfterSeconds: secondsLeft },
                 { status: 429 }
             );
+        }
+
+        // rate limit
+        const recent = await prisma.otpCode.count({
+            where: { email, createdAt: { gte: new Date(Date.now() - 60 * 1000) } },
+        });
+
+        if (recent >= 3) {
+            return Response.json({ error: "Too many requests" }, { status: 429 });
         }
 
         const code = Math.floor(100000 + Math.random() * 900000).toString();
 
         await prisma.otpCode.create({
             data: {
-                phone,
-                code: "000000",
+                email,
+                code: hashOtp(code),
                 expiresAt: new Date(Date.now() + 5 * 60 * 1000),
             },
         });
 
-        console.log(`OTP for ${phone}: ${code}`);
+        await sendOtpEmail(email, code);
 
-        return Response.json({ success: true, phone, expiresInSeconds: 300 });
-    } catch (error) {
-        return Response.json({ error: error }, { status: 500 });
+        return Response.json({ success: true, expiresInSeconds: 300 });
+
+    } catch (e) {
+        console.error(e);
+        return Response.json({ error: "Internal server error" }, { status: 500 });
     }
 }

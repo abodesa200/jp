@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -12,43 +7,295 @@ datasource db {
   provider = "postgresql"
 }
 
+// ─────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────
+
+enum Role {
+  CLIENT
+  DRIVER
+  ADMIN
+  CUSTOMER_SUPPORT
+}
+
+enum RideStatus {
+  REQUESTED
+  ACCEPTED
+  DRIVER_ARRIVED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  WALLET
+}
+
+enum RideType {
+  STANDARD // رحلة عادية 1-1
+  CARPOOLING // مشاركة الركوب
+}
+
+enum NegotiationStatus {
+  PENDING // الزبون بعث عرض، ما في رد
+  COUNTERED // السائق رد بعرض ثاني
+  ACCEPTED // تم الاتفاق
+  REJECTED // رُفض التفاوض
+  EXPIRED // انتهت المهلة
+}
+
+// ─────────────────────────────────────────────
+// User
+// ─────────────────────────────────────────────
+
 model User {
-  // id         String  @id @default(uuid())
   id         Int     @id @default(autoincrement())
-  phone      String  @unique
-  role       Role    @default(USER)
+  phone      String? @unique
+  role       Role    @default(CLIENT)
   isVerified Boolean @default(false)
 
-  name      String?
-  email     String?  @unique
-  driver    Driver?
+  name         String?
+  email        String? @unique
+  avatarUrl    String?
+  passwordHash String? // للأدمن فقط
+
+  driver            Driver?
+  rides             Ride[]          @relation("ClientRides")
+  reviews           Review[]        @relation("ClientReviews")
+  tickets           SupportTicket[]
+  carpoolPassengers RidePassenger[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
+// ─────────────────────────────────────────────
+// Driver
+// ─────────────────────────────────────────────
+
 model Driver {
-  id            String  @id @default(uuid())
-  userId        Int     @unique
-  user          User    @relation(fields: [userId], references: [id])
-  email         String?
+  id     Int  @id @default(autoincrement())
+  userId Int  @unique
+  user   User @relation(fields: [userId], references: [id])
+
   licenseNumber String
   carModel      String
-  carPlate      String
-  isApproved    Boolean @default(false)
+  carPlate      String  @unique
+  carColor      String?
+  carYear       Int?
+
+  isApproved Boolean @default(false)
+  isOnline   Boolean @default(false)
+  latitude   Float?
+  longitude  Float?
+
+  rating     Float @default(0)
+  totalRides Int   @default(0)
+
+  rides   Ride[]
+  reviews Review[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
+// ─────────────────────────────────────────────
+// Ride
+// ─────────────────────────────────────────────
+
+model Ride {
+  id       Int  @id @default(autoincrement())
+  clientId Int
+  driverId Int?
+
+  client User    @relation("ClientRides", fields: [clientId], references: [id])
+  driver Driver? @relation(fields: [driverId], references: [id])
+
+  status RideStatus @default(REQUESTED)
+  type   RideType   @default(STANDARD)
+
+  // Carpooling
+  maxPassengers  Int             @default(1) // 1 = standard, 2-4 = carpooling
+  availableSeats Int             @default(1)
+  passengers     RidePassenger[]
+
+  // Negotiation
+  systemFare  Float? // السعر اللي حسبه النظام
+  negotiation Negotiation?
+
+  pickupLat     Float
+  pickupLng     Float
+  pickupAddress String?
+
+  dropoffLat     Float
+  dropoffLng     Float
+  dropoffAddress String?
+
+  fare     Float?
+  distance Float? // km
+  duration Int? // seconds
+
+  requestedAt  DateTime  @default(now())
+  acceptedAt   DateTime?
+  startedAt    DateTime?
+  completedAt  DateTime?
+  cancelledAt  DateTime?
+  cancelReason String?
+
+  payment Payment?
+  review  Review?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// Payment
+// ─────────────────────────────────────────────
+
+model Payment {
+  id     Int  @id @default(autoincrement())
+  rideId Int  @unique
+  ride   Ride @relation(fields: [rideId], references: [id])
+
+  amount        Float
+  method        PaymentMethod @default(CASH)
+  status        PaymentStatus @default(PENDING)
+  transactionId String?
+
+  // للـ carpooling — دفع راكب معين (اختياري)
+  passengerId Int?           @unique
+  passenger   RidePassenger? @relation("PassengerPayment")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// Review
+// ─────────────────────────────────────────────
+
+model Review {
+  id       Int @id @default(autoincrement())
+  rideId   Int @unique
+  clientId Int
+  driverId Int
+
+  ride   Ride   @relation(fields: [rideId], references: [id])
+  client User   @relation("ClientReviews", fields: [clientId], references: [id])
+  driver Driver @relation(fields: [driverId], references: [id])
+
+  rating  Int
+  comment String?
+
+  createdAt DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────
+// Support Ticket
+// ─────────────────────────────────────────────
+
+model SupportTicket {
+  id     Int  @id @default(autoincrement())
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
+  subject    String
+  message    String
+  isResolved Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// Carpooling — Ride Passengers
+// ─────────────────────────────────────────────
+
+model RidePassenger {
+  id       Int @id @default(autoincrement())
+  rideId   Int
+  clientId Int
+
+  ride   Ride @relation(fields: [rideId], references: [id])
+  client User @relation(fields: [clientId], references: [id])
+
+  pickupLat     Float
+  pickupLng     Float
+  pickupAddress String?
+
+  dropoffLat     Float
+  dropoffLng     Float
+  dropoffAddress String?
+
+  fare     Float? // حصة هاد الراكب من السعر
+  joinedAt DateTime @default(now())
+
+  payment   Payment? @relation("PassengerPayment", fields: [paymentId], references: [id])
+  paymentId Int?     @unique
+
+  @@unique([rideId, clientId])
+}
+
+// ─────────────────────────────────────────────
+// Negotiation — Price Negotiation
+// ─────────────────────────────────────────────
+
+model Negotiation {
+  id     Int  @id @default(autoincrement())
+  rideId Int  @unique
+  ride   Ride @relation(fields: [rideId], references: [id])
+
+  systemFare    Float // السعر الأصلي من النظام
+  clientOffer   Float // عرض الزبون
+  driverCounter Float? // رد السائق (اختياري)
+  agreedFare    Float? // السعر النهائي المتفق عليه
+
+  status    NegotiationStatus @default(PENDING)
+  expiresAt DateTime // مهلة الرد (مثلاً 2 دقيقة)
+
+  history NegotiationOffer[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// سجل كل العروض في التفاوض
+model NegotiationOffer {
+  id            Int @id @default(autoincrement())
+  negotiationId Int
+
+  negotiation Negotiation @relation(fields: [negotiationId], references: [id])
+
+  offeredBy String // "CLIENT" أو "DRIVER"
+  amount    Float
+  message   String? // رسالة اختيارية مع العرض
+
+  createdAt DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────
+// OTP
+// ─────────────────────────────────────────────
+
 model OtpCode {
-  id        String   @id @default(uuid())
-  phone     String
+  id    Int     @id @default(autoincrement())
+  phone String?
+  email String?
+
   code      String
   expiresAt DateTime
   used      Boolean  @default(false)
   attempts  Int      @default(0)
 
   createdAt DateTime @default(now())
-}
-
-enum Role {
-  USER
-  DRIVER
 }

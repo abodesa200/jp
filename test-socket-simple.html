@@ -1,0 +1,179 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Socket Test - Simple</title>
+    <style>
+      body {
+        font-family: Arial;
+        padding: 40px;
+        background: #f0f0f0;
+      }
+      .box {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        max-width: 600px;
+        margin: 0 auto;
+      }
+      h1 {
+        color: #333;
+      }
+      button {
+        background: #0070f3;
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        font-size: 16px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin: 10px 5px;
+      }
+      button:hover {
+        background: #0051cc;
+      }
+      #status {
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 5px;
+        font-size: 18px;
+        font-weight: bold;
+      }
+      .red {
+        background: #fee;
+        color: #c00;
+      }
+      .green {
+        background: #efe;
+        color: #0a0;
+      }
+      .yellow {
+        background: #ffe;
+        color: #aa0;
+      }
+      #log {
+        background: #f5f5f5;
+        padding: 15px;
+        border-radius: 5px;
+        max-height: 300px;
+        overflow-y: auto;
+        font-family: monospace;
+        font-size: 14px;
+      }
+      .log-line {
+        padding: 5px;
+        border-bottom: 1px solid #ddd;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="box">
+      <h1>🔌 Socket.IO Test</h1>
+
+      <div id="status" class="red">❌ Not Connected</div>
+
+      <button onclick="connect()">1️⃣ Connect to Socket</button>
+      <button onclick="testRide()">2️⃣ Test Ride Event</button>
+      <button onclick="testDriver()">3️⃣ Test Driver Event</button>
+
+      <h3>📋 Log:</h3>
+      <div id="log"></div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.8.3/socket.io.min.js"></script>
+    <script>
+      let socket;
+      const statusDiv = document.getElementById("status");
+      const logDiv = document.getElementById("log");
+
+      function log(msg, color = "#333") {
+        const time = new Date().toLocaleTimeString();
+        const line = document.createElement("div");
+        line.className = "log-line";
+        line.style.color = color;
+        line.textContent = `[${time}] ${msg}`;
+        logDiv.appendChild(line);
+        logDiv.scrollTop = logDiv.scrollHeight;
+        console.log(msg);
+      }
+
+      function connect() {
+        if (socket && socket.connected) {
+          log("⚠️ Already connected!", "#ff9800");
+          return;
+        }
+
+        log("🔄 Connecting to http://localhost:3001...", "#2196f3");
+
+        socket = io("http://localhost:3001", {
+          auth: {
+            userId: 123,
+            role: "CLIENT",
+          },
+        });
+
+        socket.on("connect", () => {
+          statusDiv.className = "green";
+          statusDiv.textContent = "✅ Connected! Socket ID: " + socket.id;
+          log("✅ Connected successfully! ID: " + socket.id, "#4caf50");
+        });
+
+        socket.on("disconnect", () => {
+          statusDiv.className = "red";
+          statusDiv.textContent = "❌ Disconnected";
+          log("❌ Disconnected", "#f44336");
+        });
+
+        socket.on("connect_error", (error) => {
+          statusDiv.className = "red";
+          statusDiv.textContent = "❌ Connection Error";
+          log("❌ Error: " + error.message, "#f44336");
+          log("💡 Make sure to run: pnpm dev", "#ff9800");
+        });
+
+        // Listen for ride events
+        socket.on("ride:accepted", (data) => {
+          log("🚗 Ride accepted: " + JSON.stringify(data), "#4caf50");
+        });
+
+        socket.on("driver:location", (data) => {
+          log("📍 Driver location: " + JSON.stringify(data), "#2196f3");
+        });
+
+        socket.on("ride:status_changed", (data) => {
+          log("🔄 Status changed: " + JSON.stringify(data), "#9c27b0");
+        });
+      }
+
+      function testRide() {
+        if (!socket || !socket.connected) {
+          alert("❌ Connect first!");
+          return;
+        }
+
+        const rideId = "test-" + Date.now();
+        socket.emit("ride:join", { rideId });
+        log("📤 Sent ride:join with rideId: " + rideId, "#2196f3");
+      }
+
+      function testDriver() {
+        if (!socket || !socket.connected) {
+          alert("❌ Connect first!");
+          return;
+        }
+
+        const data = {
+          rideId: "test-123",
+          driverId: 1,
+          lat: 33.5138,
+          lng: 36.2765,
+        };
+        socket.emit("driver:location", data);
+        log("📤 Sent driver:location: " + JSON.stringify(data), "#2196f3");
+      }
+
+      // Auto log on load
+      log('📄 Page loaded. Click "Connect to Socket" to start', "#666");
+    </script>
+  </body>
+</html>

@@ -1,0 +1,843 @@
+openapi: 3.0.0
+info:
+  title: Ride Sharing API
+  version: 1.0.0
+  description: |
+    API documentation for the ride sharing platform
+
+    ## التصنيفات:
+    - 🧑 **Rides - Passenger**: APIs خاصة بالركاب (طلب رحلة، عرض رحلاتي)
+    - 🚗 **Rides - Driver**: APIs خاصة بالسائقين (رحلات قريبة، قبول رحلة، تحديث حالة)
+    - 💰 **Rides - Negotiation**: APIs التفاوض على السعر (مشتركة)
+    - 📋 **Rides - Shared**: APIs مشتركة بين الراكب والسائق
+
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+  - url: https://your-production-url.com
+    description: Production server
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        phone:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [CLIENT, DRIVER, ADMIN, SUPPORT]
+
+    Driver:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        vehicleType:
+          type: string
+        vehiclePlate:
+          type: string
+        licenseNumber:
+          type: string
+        approved:
+          type: boolean
+        rating:
+          type: number
+
+    Ride:
+      type: object
+      properties:
+        id:
+          type: string
+        passengerId:
+          type: string
+        driverId:
+          type: string
+        pickupLat:
+          type: number
+        pickupLng:
+          type: number
+        dropoffLat:
+          type: number
+        dropoffLng:
+          type: number
+        status:
+          type: string
+        price:
+          type: number
+        distance:
+          type: number
+
+paths:
+  # ==================== Authentication ====================
+  /api/auth/send-otp:
+    post:
+      tags:
+        - Authentication
+      summary: إرسال OTP للهاتف
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - phone
+                - context
+              properties:
+                phone:
+                  type: string
+                  example: "+966501234567"
+                context:
+                  type: string
+                  enum: [LOGIN, REGISTER]
+      responses:
+        "200":
+          description: OTP sent successfully
+
+  /api/auth/verify-otp:
+    post:
+      tags:
+        - Authentication
+      summary: التحقق من OTP والحصول على JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - phone
+                - code
+                - context
+              properties:
+                phone:
+                  type: string
+                  example: "+966501234567"
+                code:
+                  type: string
+                  example: "123456"
+                context:
+                  type: string
+                  enum: [LOGIN, REGISTER]
+      responses:
+        "200":
+          description: Verification successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  user:
+                    $ref: "#/components/schemas/User"
+
+  /api/auth/admin-login:
+    post:
+      tags:
+        - Authentication
+      summary: تسجيل دخول الأدمن
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  example: "admin@example.com"
+                password:
+                  type: string
+                  example: "password123"
+      responses:
+        "200":
+          description: Login successful
+
+  # ==================== Profile ====================
+  /api/profile:
+    get:
+      tags:
+        - Profile
+      summary: جلب بيانات المستخدم الحالي
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+    patch:
+      tags:
+        - Profile
+      summary: تعديل بيانات المستخدم
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+      responses:
+        "200":
+          description: Profile updated
+
+  /api/profile/driver:
+    get:
+      tags:
+        - Profile
+      summary: جلب بيانات السائق الكاملة
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Driver profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Driver"
+
+    patch:
+      tags:
+        - Profile
+      summary: تعديل بيانات السائق
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                vehicleType:
+                  type: string
+                vehiclePlate:
+                  type: string
+                licenseNumber:
+                  type: string
+      responses:
+        "200":
+          description: Driver profile updated
+
+  # ==================== Rides - Passenger APIs ====================
+  /api/rides:
+    get:
+      tags:
+        - Rides - Passenger
+      summary: 🧑 جلب رحلات الراكب
+      description: |
+        يجلب رحلات المستخدم الحالي كراكب (الرحلات اللي طلبها)
+        - يستخدمه الراكب لعرض رحلاته
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [PENDING, ACCEPTED, IN_PROGRESS, COMPLETED, CANCELLED]
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: List of rides
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rides:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Ride"
+                  total:
+                    type: integer
+
+    post:
+      tags:
+        - Rides - Passenger
+      summary: 🧑 إنشاء رحلة جديدة (طلب رحلة)
+      description: |
+        الراكب ينشئ طلب رحلة جديدة
+        - يحدد نقطة الانطلاق والوجهة
+        - يختار نوع الرحلة
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - pickupLat
+                - pickupLng
+                - dropoffLat
+                - dropoffLng
+              properties:
+                pickupLat:
+                  type: number
+                  example: 24.7136
+                  description: خط العرض لنقطة الانطلاق
+                pickupLng:
+                  type: number
+                  example: 46.6753
+                  description: خط الطول لنقطة الانطلاق
+                pickupAddress:
+                  type: string
+                  example: "شارع الملك فهد، الرياض"
+                dropoffLat:
+                  type: number
+                  example: 24.7736
+                  description: خط العرض للوجهة
+                dropoffLng:
+                  type: number
+                  example: 46.7353
+                  description: خط الطول للوجهة
+                dropoffAddress:
+                  type: string
+                  example: "مطار الملك خالد الدولي"
+                rideType:
+                  type: string
+                  enum: [STANDARD, PREMIUM, CARPOOL]
+                  default: STANDARD
+                scheduledAt:
+                  type: string
+                  format: date-time
+                  description: وقت الرحلة المجدولة (اختياري)
+                notes:
+                  type: string
+                  example: "معي حقيبة كبيرة"
+      responses:
+        "201":
+          description: Ride created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ride"
+
+  # ==================== Rides - Driver APIs ====================
+  /api/rides/nearby:
+    get:
+      tags:
+        - Rides - Driver
+      summary: 🚗 أقرب الرحلات المتاحة (للسائق)
+      description: |
+        السائق يشوف الرحلات القريبة منه والمتاحة للقبول
+        - يعرض فقط الرحلات بحالة PENDING
+        - يحسب المسافة من موقع السائق الحالي
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: lat
+          required: true
+          schema:
+            type: number
+          description: موقع السائق الحالي - خط العرض
+          example: 24.7136
+        - in: query
+          name: lng
+          required: true
+          schema:
+            type: number
+          description: موقع السائق الحالي - خط الطول
+          example: 46.6753
+        - in: query
+          name: radius
+          schema:
+            type: number
+            default: 10
+          description: نطاق البحث بالكيلومتر
+      responses:
+        "200":
+          description: Nearby available rides
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Ride"
+
+  /api/rides/{id}/accept:
+    post:
+      tags:
+        - Rides - Driver
+      summary: 🚗 قبول الرحلة (السائق فقط)
+      description: |
+        السائق يقبل طلب الرحلة
+        - يغير حالة الرحلة من PENDING إلى ACCEPTED
+        - يربط السائق بالرحلة
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: معرف الرحلة
+      responses:
+        "200":
+          description: Ride accepted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ride"
+
+  /api/rides/{id}:
+    patch:
+      tags:
+        - Rides - Driver
+      summary: 🚗 تحديث حالة الرحلة (السائق فقط)
+      description: |
+        السائق يحدث حالة الرحلة أثناء تنفيذها
+        - بدء الرحلة: IN_PROGRESS
+        - إنهاء الرحلة: COMPLETED
+        - إلغاء الرحلة: CANCELLED
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: [IN_PROGRESS, COMPLETED, CANCELLED]
+                  example: IN_PROGRESS
+                currentLat:
+                  type: number
+                  description: الموقع الحالي للسائق (اختياري)
+                currentLng:
+                  type: number
+                  description: الموقع الحالي للسائق (اختياري)
+      responses:
+        "200":
+          description: Ride status updated
+
+    # ==================== Rides - Shared APIs ====================
+    get:
+      tags:
+        - Rides - Shared
+      summary: 📋 تفاصيل رحلة (مشترك)
+      description: |
+        يجلب تفاصيل رحلة معينة
+        - متاح للراكب والسائق
+        - يعرض كل تفاصيل الرحلة
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Ride details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ride"
+
+  /api/rides/{id}/cancel:
+    post:
+      tags:
+        - Rides - Shared
+      summary: ❌ إلغاء الرحلة (مشترك)
+      description: |
+        إلغاء الرحلة - متاح للراكب والسائق
+        - الراكب يقدر يلغي قبل ما السائق يقبل
+        - السائق يقدر يلغي بعد القبول مع ذكر السبب
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  example: "ظرف طارئ"
+      responses:
+        "200":
+          description: Ride cancelled successfully
+
+  # ==================== Rides - Negotiation ====================
+  /api/rides/{id}/negotiate:
+    post:
+      tags:
+        - Rides - Negotiation
+      summary: 💰 إنشاء/تحديث عرض تفاوض
+      description: |
+        الراكب أو السائق يقدم عرض سعر للتفاوض
+        - الراكب يقدر يعرض سعر أقل
+        - السائق يقدر يعرض سعر أعلى
+        - كل طرف يقدر يحدث عرضه
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - offeredPrice
+              properties:
+                offeredPrice:
+                  type: number
+                  example: 25.50
+                  description: السعر المقترح
+                message:
+                  type: string
+                  example: "هل ممكن نخفض السعر شوي؟"
+                  description: رسالة اختيارية للطرف الآخر
+      responses:
+        "200":
+          description: Negotiation offer created/updated
+
+    patch:
+      tags:
+        - Rides - Negotiation
+      summary: 💰 قبول/رفض التفاوض
+      description: |
+        الطرف الآخر يقبل أو يرفض عرض التفاوض
+        - إذا قبل: يتحدث سعر الرحلة
+        - إذا رفض: يبقى السعر الأصلي
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - action
+              properties:
+                action:
+                  type: string
+                  enum: [ACCEPT, REJECT]
+                  example: ACCEPT
+      responses:
+        "200":
+          description: Negotiation response recorded
+
+  # ==================== Admin - Users ====================
+  /api/admin/users:
+    get:
+      tags:
+        - Admin - Users
+      summary: جلب قائمة المستخدمين
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: role
+          schema:
+            type: string
+            enum: [CLIENT, DRIVER, ADMIN, SUPPORT]
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: List of users
+
+    post:
+      tags:
+        - Admin - Users
+      summary: إنشاء مستخدم جديد
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - phone
+                - name
+                - role
+              properties:
+                phone:
+                  type: string
+                name:
+                  type: string
+                email:
+                  type: string
+                role:
+                  type: string
+                  enum: [CLIENT, SUPPORT]
+      responses:
+        "201":
+          description: User created
+
+  /api/admin/users/{id}:
+    get:
+      tags:
+        - Admin - Users
+      summary: تفاصيل مستخدم
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User details
+
+    patch:
+      tags:
+        - Admin - Users
+      summary: تعديل مستخدم
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                role:
+                  type: string
+      responses:
+        "200":
+          description: User updated
+
+    delete:
+      tags:
+        - Admin - Users
+      summary: حذف مستخدم
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User deleted
+
+  # ==================== Admin - Drivers ====================
+  /api/admin/drivers:
+    get:
+      tags:
+        - Admin - Drivers
+      summary: جلب قائمة السائقين
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: approved
+          schema:
+            type: boolean
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: List of drivers
+
+    post:
+      tags:
+        - Admin - Drivers
+      summary: إنشاء سائق جديد
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - phone
+                - name
+                - vehicleType
+                - vehiclePlate
+                - licenseNumber
+              properties:
+                phone:
+                  type: string
+                name:
+                  type: string
+                email:
+                  type: string
+                vehicleType:
+                  type: string
+                vehiclePlate:
+                  type: string
+                licenseNumber:
+                  type: string
+                approved:
+                  type: boolean
+      responses:
+        "201":
+          description: Driver created
+
+  /api/admin/drivers/{id}:
+    get:
+      tags:
+        - Admin - Drivers
+      summary: تفاصيل سائق
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Driver details
+
+    patch:
+      tags:
+        - Admin - Drivers
+      summary: تعديل سائق والموافقة عليه
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                vehicleType:
+                  type: string
+                vehiclePlate:
+                  type: string
+                licenseNumber:
+                  type: string
+                approved:
+                  type: boolean
+      responses:
+        "200":
+          description: Driver updated
+
+    delete:
+      tags:
+        - Admin - Drivers
+      summary: حذف سائق
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Driver deleted
