@@ -35,13 +35,13 @@ export async function POST(req: Request) {
             where: { email, used: false, expiresAt: { gt: new Date() } },
         });
 
-        if (activeOtp) {
-            const secondsLeft = Math.ceil((activeOtp.expiresAt.getTime() - Date.now()) / 1000);
-            return Response.json(
-                { error: "OTP already sent", retryAfterSeconds: secondsLeft },
-                { status: 429 }
-            );
-        }
+        // if (activeOtp) {
+        //     const secondsLeft = Math.ceil((activeOtp.expiresAt.getTime() - Date.now()) / 1000);
+        //     return Response.json(
+        //         { error: "OTP already sent", retryAfterSeconds: secondsLeft },
+        //         { status: 429 }
+        //     );
+        // }
 
         // rate limit
         const recent = await prisma.otpCode.count({

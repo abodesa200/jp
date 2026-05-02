@@ -35,58 +35,313 @@ components:
       type: object
       properties:
         id:
-          type: string
+          type: integer
+          example: 1
         phone:
           type: string
-        name:
-          type: string
+          nullable: true
+          example: "+966501234567"
         email:
           type: string
+          nullable: true
+          format: email
+          example: "user@example.com"
+        name:
+          type: string
+          nullable: true
+          example: "أحمد محمد"
+        avatarUrl:
+          type: string
+          nullable: true
+          example: "https://example.com/avatar.jpg"
         role:
           type: string
-          enum: [CLIENT, DRIVER, ADMIN, SUPPORT]
+          enum: [CLIENT, DRIVER, ADMIN, CUSTOMER_SUPPORT]
+          example: "CLIENT"
+        isVerified:
+          type: boolean
+          example: true
+          description: هل تم التحقق من المستخدم
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
 
     Driver:
       type: object
       properties:
         id:
-          type: string
+          type: integer
+          example: 1
         userId:
-          type: string
-        vehicleType:
-          type: string
-        vehiclePlate:
-          type: string
+          type: integer
+          example: 5
         licenseNumber:
           type: string
-        approved:
+          example: "123456789"
+        carModel:
+          type: string
+          example: "Toyota Camry 2022"
+        carPlate:
+          type: string
+          example: "ABC-1234"
+        carColor:
+          type: string
+          nullable: true
+          example: "أبيض"
+        carYear:
+          type: integer
+          nullable: true
+          example: 2022
+        isApproved:
           type: boolean
+          example: true
+          description: هل تمت الموافقة على السائق من الأدمن
+        isOnline:
+          type: boolean
+          example: false
+          description: هل السائق متصل حالياً
+        latitude:
+          type: number
+          nullable: true
+          example: 24.7136
+          description: الموقع الحالي - خط العرض
+        longitude:
+          type: number
+          nullable: true
+          example: 46.6753
+          description: الموقع الحالي - خط الطول
         rating:
           type: number
+          example: 4.5
+          description: التقييم العام
+        totalRides:
+          type: integer
+          example: 150
+          description: عدد الرحلات المكتملة
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
 
     Ride:
       type: object
       properties:
         id:
-          type: string
-        passengerId:
-          type: string
+          type: integer
+          example: 1
+        clientId:
+          type: integer
+          example: 10
         driverId:
-          type: string
-        pickupLat:
-          type: number
-        pickupLng:
-          type: number
-        dropoffLat:
-          type: number
-        dropoffLng:
-          type: number
+          type: integer
+          nullable: true
+          example: 5
         status:
           type: string
-        price:
+          enum: [REQUESTED, ACCEPTED, DRIVER_ARRIVED, IN_PROGRESS, COMPLETED, CANCELLED]
+          example: "REQUESTED"
+        type:
+          type: string
+          enum: [STANDARD, CARPOOLING]
+          example: "STANDARD"
+          description: |
+            نوع الرحلة:
+            - STANDARD: رحلة عادية 1-1
+            - CARPOOLING: مشاركة الركوب
+        maxPassengers:
+          type: integer
+          example: 1
+          description: الحد الأقصى للركاب (1 للعادية، 2-4 للمشاركة)
+        availableSeats:
+          type: integer
+          example: 1
+          description: المقاعد المتاحة
+        systemFare:
           type: number
+          nullable: true
+          example: 35.50
+          description: السعر الذي حسبه النظام
+        pickupLat:
+          type: number
+          example: 24.7136
+        pickupLng:
+          type: number
+          example: 46.6753
+        pickupAddress:
+          type: string
+          nullable: true
+          example: "شارع الملك فهد، الرياض"
+        dropoffLat:
+          type: number
+          example: 24.7736
+        dropoffLng:
+          type: number
+          example: 46.7353
+        dropoffAddress:
+          type: string
+          nullable: true
+          example: "مطار الملك خالد الدولي"
+        fare:
+          type: number
+          nullable: true
+          example: 30.00
+          description: السعر النهائي (بعد التفاوض إن وجد)
         distance:
           type: number
+          nullable: true
+          example: 15.5
+          description: المسافة بالكيلومتر
+        duration:
+          type: integer
+          nullable: true
+          example: 1200
+          description: المدة بالثواني
+        requestedAt:
+          type: string
+          format: date-time
+        acceptedAt:
+          type: string
+          format: date-time
+          nullable: true
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+        cancelledAt:
+          type: string
+          format: date-time
+          nullable: true
+        cancelReason:
+          type: string
+          nullable: true
+          example: "ظرف طارئ"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Negotiation:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        rideId:
+          type: integer
+          example: 10
+        systemFare:
+          type: number
+          example: 35.50
+          description: السعر الأصلي من النظام
+        clientOffer:
+          type: number
+          example: 30.00
+          description: عرض الزبون
+        driverCounter:
+          type: number
+          nullable: true
+          example: 32.50
+          description: رد السائق (اختياري)
+        agreedFare:
+          type: number
+          nullable: true
+          example: 32.50
+          description: السعر النهائي المتفق عليه
+        status:
+          type: string
+          enum: [PENDING, COUNTERED, ACCEPTED, REJECTED, EXPIRED]
+          example: "PENDING"
+          description: |
+            حالة التفاوض:
+            - PENDING: الزبون بعث عرض، ما في رد
+            - COUNTERED: السائق رد بعرض ثاني
+            - ACCEPTED: تم الاتفاق
+            - REJECTED: رُفض التفاوض
+            - EXPIRED: انتهت المهلة
+        expiresAt:
+          type: string
+          format: date-time
+          description: مهلة الرد (مثلاً 2 دقيقة)
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Payment:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        rideId:
+          type: integer
+          example: 10
+        amount:
+          type: number
+          example: 32.50
+        method:
+          type: string
+          enum: [CASH, CARD, WALLET]
+          example: "CASH"
+        status:
+          type: string
+          enum: [PENDING, PAID, FAILED, REFUNDED]
+          example: "PENDING"
+        transactionId:
+          type: string
+          nullable: true
+          example: "txn_123456789"
+        passengerId:
+          type: integer
+          nullable: true
+          description: للـ carpooling — دفع راكب معين (اختياري)
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Review:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        rideId:
+          type: integer
+          example: 10
+        clientId:
+          type: integer
+          example: 15
+        driverId:
+          type: integer
+          example: 5
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 5
+        comment:
+          type: string
+          nullable: true
+          example: "سائق ممتاز وسيارة نظيفة"
+        createdAt:
+          type: string
+          format: date-time
 
 paths:
   # ==================== Authentication ====================
@@ -94,7 +349,13 @@ paths:
     post:
       tags:
         - Authentication
-      summary: إرسال OTP للهاتف
+      summary: إرسال OTP للبريد الإلكتروني
+      description: |
+        إرسال رمز التحقق OTP عبر البريد الإلكتروني باستخدام خدمة Resend
+        - للمستخدمين الجدد (client): يتم إنشاء حساب تلقائياً عند التحقق
+        - للسائقين (driver): يجب أن يكون الحساب موجوداً ومعتمداً مسبقاً من الأدمن
+        - Rate Limiting: 3 محاولات كل 10 دقائق
+        - صلاحية OTP: 5 دقائق
       requestBody:
         required: true
         content:
@@ -102,24 +363,89 @@ paths:
             schema:
               type: object
               required:
-                - phone
-                - context
+                - email
+                - appContext
               properties:
-                phone:
+                email:
                   type: string
-                  example: "+966501234567"
-                context:
+                  format: email
+                  example: "user@example.com"
+                  description: البريد الإلكتروني للمستخدم
+                appContext:
                   type: string
-                  enum: [LOGIN, REGISTER]
+                  enum: [client, driver]
+                  example: "client"
+                  description: |
+                    نوع المستخدم:
+                    - client: مستخدم عادي (يتم إنشاء حساب تلقائياً)
+                    - driver: سائق (يجب أن يكون موجوداً ومعتمداً)
       responses:
         "200":
           description: OTP sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  expiresInSeconds:
+                    type: integer
+                    example: 300
+                    description: مدة صلاحية OTP بالثواني
+        "400":
+          description: Invalid email or context
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Driver account pending approval
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Driver account pending approval"
+        "404":
+          description: No driver account found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "No driver account found"
+        "429":
+          description: Too many requests (rate limited)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Too many requests"
+                  retryAfterSeconds:
+                    type: integer
+                    example: 600
+                    description: عدد الثواني قبل المحاولة مرة أخرى
 
   /api/auth/verify-otp:
     post:
       tags:
         - Authentication
       summary: التحقق من OTP والحصول على JWT
+      description: |
+        التحقق من رمز OTP والحصول على JWT token
+        - للمستخدمين الجدد (client): يتم إنشاء حساب تلقائياً
+        - للسائقين (driver): يجب أن يكون الحساب موجوداً
+        - JWT صالح لمدة 7 أيام
+        - يتم إرجاع token في الاستجابة وفي Cookie
       requestBody:
         required: true
         content:
@@ -127,31 +453,81 @@ paths:
             schema:
               type: object
               required:
-                - phone
+                - email
                 - code
-                - context
+                - appContext
               properties:
-                phone:
+                email:
                   type: string
-                  example: "+966501234567"
+                  format: email
+                  example: "user@example.com"
+                  description: البريد الإلكتروني
                 code:
                   type: string
                   example: "123456"
-                context:
+                  description: رمز التحقق المكون من 6 أرقام
+                appContext:
                   type: string
-                  enum: [LOGIN, REGISTER]
+                  enum: [client, driver]
+                  example: "client"
+                  description: نوع المستخدم
       responses:
         "200":
           description: Verification successful
+          headers:
+            Set-Cookie:
+              description: JWT token in HttpOnly cookie
+              schema:
+                type: string
+                example: "token=eyJhbGc...; HttpOnly; Path=/; Max-Age=604800; SameSite=Strict"
           content:
             application/json:
               schema:
                 type: object
                 properties:
+                  success:
+                    type: boolean
+                    example: true
                   token:
                     type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    description: JWT token صالح لمدة 7 أيام
                   user:
-                    $ref: "#/components/schemas/User"
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      email:
+                        type: string
+                        example: "user@example.com"
+                      role:
+                        type: string
+                        enum: [CLIENT, DRIVER, ADMIN, CUSTOMER_SUPPORT]
+                        example: "CLIENT"
+                      isVerified:
+                        type: boolean
+                        example: true
+        "400":
+          description: Invalid or expired OTP
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid or expired OTP"
+        "403":
+          description: Account type mismatch
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "This account is not a driver account."
 
   /api/auth/admin-login:
     post:
@@ -220,6 +596,9 @@ paths:
       tags:
         - Profile
       summary: جلب بيانات السائق الكاملة
+      description: |
+        يجلب بيانات السائق الكاملة للمستخدم الحالي
+        - يجب أن يكون المستخدم سائقاً (role=DRIVER)
       security:
         - bearerAuth: []
       responses:
@@ -234,6 +613,9 @@ paths:
       tags:
         - Profile
       summary: تعديل بيانات السائق
+      description: |
+        السائق يعدل بياناته الشخصية
+        - لا يمكن تعديل isApproved (الأدمن فقط)
       security:
         - bearerAuth: []
       requestBody:
@@ -243,12 +625,25 @@ paths:
             schema:
               type: object
               properties:
-                vehicleType:
-                  type: string
-                vehiclePlate:
-                  type: string
                 licenseNumber:
                   type: string
+                carModel:
+                  type: string
+                carPlate:
+                  type: string
+                carColor:
+                  type: string
+                carYear:
+                  type: integer
+                isOnline:
+                  type: boolean
+                  description: تحديث حالة الاتصال
+                latitude:
+                  type: number
+                  description: تحديث الموقع الحالي
+                longitude:
+                  type: number
+                  description: تحديث الموقع الحالي
       responses:
         "200":
           description: Driver profile updated
@@ -302,7 +697,8 @@ paths:
       description: |
         الراكب ينشئ طلب رحلة جديدة
         - يحدد نقطة الانطلاق والوجهة
-        - يختار نوع الرحلة
+        - يختار نوع الرحلة (STANDARD أو CARPOOLING)
+        - النظام يحسب السعر تلقائياً (systemFare)
       security:
         - bearerAuth: []
       requestBody:
@@ -339,17 +735,17 @@ paths:
                 dropoffAddress:
                   type: string
                   example: "مطار الملك خالد الدولي"
-                rideType:
+                type:
                   type: string
-                  enum: [STANDARD, PREMIUM, CARPOOL]
+                  enum: [STANDARD, CARPOOLING]
                   default: STANDARD
-                scheduledAt:
-                  type: string
-                  format: date-time
-                  description: وقت الرحلة المجدولة (اختياري)
-                notes:
-                  type: string
-                  example: "معي حقيبة كبيرة"
+                  description: نوع الرحلة
+                maxPassengers:
+                  type: integer
+                  minimum: 1
+                  maximum: 4
+                  default: 1
+                  description: الحد الأقصى للركاب (للـ CARPOOLING فقط)
       responses:
         "201":
           description: Ride created successfully
@@ -434,9 +830,10 @@ paths:
       summary: 🚗 تحديث حالة الرحلة (السائق فقط)
       description: |
         السائق يحدث حالة الرحلة أثناء تنفيذها
-        - بدء الرحلة: IN_PROGRESS
-        - إنهاء الرحلة: COMPLETED
-        - إلغاء الرحلة: CANCELLED
+        - DRIVER_ARRIVED: السائق وصل لنقطة الانطلاق
+        - IN_PROGRESS: بدء الرحلة
+        - COMPLETED: إنهاء الرحلة
+        - CANCELLED: إلغاء الرحلة
       security:
         - bearerAuth: []
       parameters:
@@ -456,7 +853,7 @@ paths:
               properties:
                 status:
                   type: string
-                  enum: [IN_PROGRESS, COMPLETED, CANCELLED]
+                  enum: [DRIVER_ARRIVED, IN_PROGRESS, COMPLETED, CANCELLED]
                   example: IN_PROGRESS
                 currentLat:
                   type: number
@@ -725,9 +1122,15 @@ paths:
         - bearerAuth: []
       parameters:
         - in: query
-          name: approved
+          name: isApproved
           schema:
             type: boolean
+          description: تصفية حسب حالة الموافقة
+        - in: query
+          name: isOnline
+          schema:
+            type: boolean
+          description: تصفية حسب حالة الاتصال
         - in: query
           name: page
           schema:
@@ -746,6 +1149,10 @@ paths:
       tags:
         - Admin - Drivers
       summary: إنشاء سائق جديد
+      description: |
+        الأدمن ينشئ حساب سائق جديد
+        - يتم إنشاء User بـ role=DRIVER
+        - يتم إنشاء Driver profile مرتبط بالـ User
       security:
         - bearerAuth: []
       requestBody:
@@ -755,26 +1162,41 @@ paths:
             schema:
               type: object
               required:
-                - phone
+                - email
                 - name
-                - vehicleType
-                - vehiclePlate
                 - licenseNumber
+                - carModel
+                - carPlate
               properties:
-                phone:
-                  type: string
-                name:
-                  type: string
                 email:
                   type: string
-                vehicleType:
+                  format: email
+                  example: "driver@example.com"
+                name:
                   type: string
-                vehiclePlate:
+                  example: "محمد أحمد"
+                phone:
                   type: string
+                  example: "+966501234567"
                 licenseNumber:
                   type: string
-                approved:
+                  example: "123456789"
+                carModel:
+                  type: string
+                  example: "Toyota Camry 2022"
+                carPlate:
+                  type: string
+                  example: "ABC-1234"
+                carColor:
+                  type: string
+                  example: "أبيض"
+                carYear:
+                  type: integer
+                  example: 2022
+                isApproved:
                   type: boolean
+                  default: false
+                  description: الموافقة على السائق مباشرة
       responses:
         "201":
           description: Driver created
@@ -800,6 +1222,10 @@ paths:
       tags:
         - Admin - Drivers
       summary: تعديل سائق والموافقة عليه
+      description: |
+        تعديل بيانات السائق
+        - يمكن تحديث بيانات السيارة
+        - يمكن الموافقة على السائق (isApproved)
       security:
         - bearerAuth: []
       parameters:
@@ -814,14 +1240,19 @@ paths:
             schema:
               type: object
               properties:
-                vehicleType:
-                  type: string
-                vehiclePlate:
-                  type: string
                 licenseNumber:
                   type: string
-                approved:
+                carModel:
+                  type: string
+                carPlate:
+                  type: string
+                carColor:
+                  type: string
+                carYear:
+                  type: integer
+                isApproved:
                   type: boolean
+                  description: الموافقة على السائق أو إلغاء الموافقة
       responses:
         "200":
           description: Driver updated
