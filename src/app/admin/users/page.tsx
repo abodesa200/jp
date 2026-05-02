@@ -30,6 +30,8 @@ export default function UsersPage() {
       const params = new URLSearchParams({
         page: page.toString(),
         limit: "20",
+        role: "CLIENT",
+
         ...(roleFilter && { role: roleFilter }),
       });
 

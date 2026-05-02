@@ -298,4 +298,5 @@ model OtpCode {
   attempts  Int      @default(0)
 
   createdAt DateTime @default(now())
+  @@index([email, used, expiresAt])
 }

@@ -55,26 +55,29 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const userId = parseInt(id);
     const body = await req.json();
 
-    const { name, email, avatarUrl, role, isVerified } = body;
+    const { name, email, avatarUrl, role, isVerified, isApproved } = body;
 
     const user = await prisma.user.update({
-        where: { id: userId },
-        data: {
-            ...(name !== undefined && { name }),
-            ...(email !== undefined && { email }),
-            ...(avatarUrl !== undefined && { avatarUrl }),
-            ...(role !== undefined && { role }),
-            ...(isVerified !== undefined && { isVerified }),
-        },
-        select: {
-            id: true,
-            phone: true,
-            role: true,
-            name: true,
-            email: true,
-            isVerified: true,
-        },
-    });
+    where: { id: userId },
+    data: {
+        ...(name !== undefined && { name }),
+        ...(email !== undefined && { email }),
+        ...(avatarUrl !== undefined && { avatarUrl }),
+        ...(role !== undefined && { role }),
+        ...(isVerified !== undefined && { isVerified }),
+
+        ...(isApproved !== undefined && {
+            driver: {
+                update: {
+                    isApproved: Boolean(isApproved),
+                },
+            },
+        }),
+    },
+    include: {
+        driver: true,
+    },
+});
 
     return Response.json({ user });
 }

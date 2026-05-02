@@ -1,74 +1,65 @@
 import { Resend } from "resend";
 
-if (!process.env.RESEND_API_KEY) {
-    throw new Error("RESEND_API_KEY is not defined in environment variables");
-}
+export const resend = new Resend(process.env.RESEND_API_KEY || "");
+type SendOtpResult =
+    | { success: true; data: any }
+    | { success: false; error: string };
 
-export const resend = new Resend(process.env.RESEND_API_KEY);
-
-// Development mode: skip actual email sending and log to console
-const DEV_MODE = process.env.SKIP_EMAIL_SENDING === "true";
-const VERIFIED_EMAIL = process.env.RESEND_VERIFIED_EMAIL || "abdullatifsalaas@gmail.com";
-
-/**
- * إرسال رمز التحقق OTP عبر البريد الإلكتروني
- */
-export async function sendOtpEmail(email: string, code: string) {
+export async function sendOtpEmail(
+    email: string,
+    code: string
+): Promise<SendOtpResult> {
     try {
-        // Development mode: just log the OTP
-        if (DEV_MODE) {
-            console.log("\n=================================");
-            console.log("📧 DEV MODE: OTP Email (not sent)");
-            console.log("=================================");
-            console.log(`To: ${email}`);
-            console.log(`OTP Code: ${code}`);
-            console.log("=================================\n");
-            return { success: true, data: { id: "dev-mode" } };
+        if (!email || !code) {
+            return { success: false, error: "Missing email or code" };
         }
 
-        // In testing mode, only send to verified email
-        // For other emails, log a warning but don't fail
-        const targetEmail = email === VERIFIED_EMAIL ? email : VERIFIED_EMAIL;
-
-        if (email !== VERIFIED_EMAIL) {
-            console.warn(`⚠️  Resend testing mode: Redirecting email from ${email} to ${VERIFIED_EMAIL}`);
-            console.log(`📧 OTP Code for ${email}: ${code}`);
+        const apiKey = process.env.RESEND_API_KEY;
+        if (!apiKey) {
+            console.error("Missing RESEND_API_KEY");
+            return { success: false, error: "Server misconfigured" };
         }
 
+        // 3. إرسال الإيميل
         const { data, error } = await resend.emails.send({
-            from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
-            to: targetEmail,
-            subject: `رمز التحقق الخاص بك ${email !== VERIFIED_EMAIL ? `(for ${email})` : ""}`,
+            from: "Your App <onboarding@resend.dev>",
+            to: email,
+            subject: "رمز التحقق الخاص بك",
             html: `
-                <div dir="rtl" style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                    <h2 style="color: #333;">مرحباً بك!</h2>
-                    ${email !== VERIFIED_EMAIL ? `<p style="color: #e11d48; font-weight: bold;">⚠️ Testing Mode: This OTP is for ${email}</p>` : ""}
-                    <p style="font-size: 16px; color: #555;">
-                        رمز التحقق الخاص بك هو:
-                    </p>
-                    <div style="background-color: #f4f4f4; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0;">
-                        <h1 style="color: #2563eb; font-size: 36px; margin: 0; letter-spacing: 8px;">
-                            ${code}
-                        </h1>
-                    </div>
-                    <p style="font-size: 14px; color: #777;">
-                        هذا الرمز صالح لمدة 5 دقائق فقط.
-                    </p>
-                    <p style="font-size: 14px; color: #777;">
-                        إذا لم تطلب هذا الرمز، يرجى تجاهل هذه الرسالة.
-                    </p>
-                </div>
-            `,
+        <div dir="rtl" style="font-family: Arial; max-width:600px; margin:auto;">
+          <h2>رمز التحقق</h2>
+
+          <p>استخدم الرمز التالي:</p>
+
+          <div style="background:#f4f4f4;padding:20px;text-align:center;border-radius:8px;">
+            <h1 style="letter-spacing:6px;color:#2563eb;">
+              ${String(code)}
+            </h1>
+          </div>
+
+          <p style="font-size:12px;color:#777;margin-top:20px;">
+            صالح لمدة 5 دقائق فقط
+          </p>
+        </div>
+      `,
         });
 
+        // 4. معالجة خطأ Resend بشكل آمن
         if (error) {
             console.error("Resend error:", error);
-            throw new Error(`Failed to send email: ${error.message}`);
+            return {
+                success: false,
+                error: error.message || "Email sending failed",
+            };
         }
-
+        console.log("SEND RESULT:", { data, error });
         return { success: true, data };
-    } catch (error) {
-        console.error("Error sending OTP email:", error);
-        throw error;
+    } catch (err) {
+        console.error("Unexpected error:", err);
+
+        return {
+            success: false,
+            error: "Internal server error",
+        };
     }
 }
