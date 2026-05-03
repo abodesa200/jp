@@ -30,3 +30,24 @@ export async function updateDriverInfo(userId: number, driverInfo: any) {
         },
     });
 }
+
+export async function updateDriverLocation(
+    userId: number,
+    latitude: number,
+    longitude: number
+) {
+    return prisma.driver.update({
+        where: { userId },
+        data: {
+            latitude,
+            longitude,
+            lastLocationUpdate: new Date(),
+        },
+        select: {
+            id: true,
+            latitude: true,
+            longitude: true,
+            lastLocationUpdate: true,
+        },
+    });
+}

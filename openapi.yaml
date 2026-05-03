@@ -5,11 +5,11 @@ info:
   description: |
     API documentation for the ride sharing platform
 
-    ## التصنيفات:
-    - 🧑 **Rides - Passenger**: APIs خاصة بالركاب (طلب رحلة، عرض رحلاتي)
-    - 🚗 **Rides - Driver**: APIs خاصة بالسائقين (رحلات قريبة، قبول رحلة، تحديث حالة)
-    - 💰 **Rides - Negotiation**: APIs التفاوض على السعر (مشتركة)
-    - 📋 **Rides - Shared**: APIs مشتركة بين الراكب والسائق
+    ## Categories:
+    - 🧑 **Rides - Passenger**: APIs for passengers (request ride, view my rides)
+    - 🚗 **Rides - Driver**: APIs for drivers (nearby rides, accept ride, update status)
+    - 💰 **Rides - Negotiation**: Price negotiation APIs (shared)
+    - 📋 **Rides - Shared**: Shared APIs between passenger and driver
 
 servers:
   - url: http://localhost:3000
@@ -49,7 +49,7 @@ components:
         name:
           type: string
           nullable: true
-          example: "أحمد محمد"
+          example: "Ahmed Mohammed"
         avatarUrl:
           type: string
           nullable: true
@@ -61,7 +61,7 @@ components:
         isVerified:
           type: boolean
           example: true
-          description: هل تم التحقق من المستخدم
+          description: Whether the user is verified
         createdAt:
           type: string
           format: date-time
@@ -90,7 +90,7 @@ components:
         carColor:
           type: string
           nullable: true
-          example: "أبيض"
+          example: "White"
         carYear:
           type: integer
           nullable: true
@@ -98,29 +98,35 @@ components:
         isApproved:
           type: boolean
           example: true
-          description: هل تمت الموافقة على السائق من الأدمن
+          description: Whether the driver is approved by admin
         isOnline:
           type: boolean
           example: false
-          description: هل السائق متصل حالياً
+          description: Whether the driver is currently online
         latitude:
           type: number
           nullable: true
           example: 24.7136
-          description: الموقع الحالي - خط العرض
+          description: Current location - latitude
         longitude:
           type: number
           nullable: true
           example: 46.6753
-          description: الموقع الحالي - خط الطول
+          description: Current location - longitude
+        lastLocationUpdate:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2026-05-03T14:12:53.000Z"
+          description: Last location update timestamp
         rating:
           type: number
           example: 4.5
-          description: التقييم العام
+          description: Overall rating
         totalRides:
           type: integer
           example: 150
-          description: عدد الرحلات المكتملة
+          description: Number of completed rides
         createdAt:
           type: string
           format: date-time
@@ -150,22 +156,22 @@ components:
           enum: [STANDARD, CARPOOLING]
           example: "STANDARD"
           description: |
-            نوع الرحلة:
-            - STANDARD: رحلة عادية 1-1
-            - CARPOOLING: مشاركة الركوب
+            Ride type:
+            - STANDARD: Standard 1-1 ride
+            - CARPOOLING: Ride sharing
         maxPassengers:
           type: integer
           example: 1
-          description: الحد الأقصى للركاب (1 للعادية، 2-4 للمشاركة)
+          description: Maximum passengers (1 for standard, 2-4 for carpooling)
         availableSeats:
           type: integer
           example: 1
-          description: المقاعد المتاحة
+          description: Available seats
         systemFare:
           type: number
           nullable: true
           example: 35.50
-          description: السعر الذي حسبه النظام
+          description: System calculated fare
         pickupLat:
           type: number
           example: 24.7136
@@ -175,7 +181,7 @@ components:
         pickupAddress:
           type: string
           nullable: true
-          example: "شارع الملك فهد، الرياض"
+          example: "King Fahd Road, Riyadh"
         dropoffLat:
           type: number
           example: 24.7736
@@ -185,22 +191,22 @@ components:
         dropoffAddress:
           type: string
           nullable: true
-          example: "مطار الملك خالد الدولي"
+          example: "King Khalid International Airport"
         fare:
           type: number
           nullable: true
           example: 30.00
-          description: السعر النهائي (بعد التفاوض إن وجد)
+          description: Final fare (after negotiation if any)
         distance:
           type: number
           nullable: true
           example: 15.5
-          description: المسافة بالكيلومتر
+          description: Distance in kilometers
         duration:
           type: integer
           nullable: true
           example: 1200
-          description: المدة بالثواني
+          description: Duration in seconds
         requestedAt:
           type: string
           format: date-time
@@ -223,7 +229,7 @@ components:
         cancelReason:
           type: string
           nullable: true
-          example: "ظرف طارئ"
+          example: "Emergency situation"
         createdAt:
           type: string
           format: date-time
@@ -243,36 +249,36 @@ components:
         systemFare:
           type: number
           example: 35.50
-          description: السعر الأصلي من النظام
+          description: Original system calculated fare
         clientOffer:
           type: number
           example: 30.00
-          description: عرض الزبون
+          description: Client's offer
         driverCounter:
           type: number
           nullable: true
           example: 32.50
-          description: رد السائق (اختياري)
+          description: Driver's counter offer (optional)
         agreedFare:
           type: number
           nullable: true
           example: 32.50
-          description: السعر النهائي المتفق عليه
+          description: Final agreed fare
         status:
           type: string
           enum: [PENDING, COUNTERED, ACCEPTED, REJECTED, EXPIRED]
           example: "PENDING"
           description: |
-            حالة التفاوض:
-            - PENDING: الزبون بعث عرض، ما في رد
-            - COUNTERED: السائق رد بعرض ثاني
-            - ACCEPTED: تم الاتفاق
-            - REJECTED: رُفض التفاوض
-            - EXPIRED: انتهت المهلة
+            Negotiation status:
+            - PENDING: Client sent offer, no response yet
+            - COUNTERED: Driver responded with counter offer
+            - ACCEPTED: Agreement reached
+            - REJECTED: Negotiation rejected
+            - EXPIRED: Deadline passed
         expiresAt:
           type: string
           format: date-time
-          description: مهلة الرد (مثلاً 2 دقيقة)
+          description: Response deadline (e.g., 2 minutes)
         createdAt:
           type: string
           format: date-time
@@ -307,7 +313,7 @@ components:
         passengerId:
           type: integer
           nullable: true
-          description: للـ carpooling — دفع راكب معين (اختياري)
+          description: For carpooling - payment by specific passenger (optional)
         createdAt:
           type: string
           format: date-time
@@ -338,7 +344,7 @@ components:
         comment:
           type: string
           nullable: true
-          example: "سائق ممتاز وسيارة نظيفة"
+          example: "Excellent driver and clean car"
         createdAt:
           type: string
           format: date-time
@@ -349,13 +355,13 @@ paths:
     post:
       tags:
         - Authentication
-      summary: إرسال OTP للبريد الإلكتروني
+      summary: Send OTP to email
       description: |
-        إرسال رمز التحقق OTP عبر البريد الإلكتروني باستخدام خدمة Resend
-        - للمستخدمين الجدد (client): يتم إنشاء حساب تلقائياً عند التحقق
-        - للسائقين (driver): يجب أن يكون الحساب موجوداً ومعتمداً مسبقاً من الأدمن
-        - Rate Limiting: 3 محاولات كل 10 دقائق
-        - صلاحية OTP: 5 دقائق
+        Send OTP verification code via email using Resend service
+        - For new users (client): Account is created automatically upon verification
+        - For drivers: Account must exist and be approved by admin beforehand
+        - Rate Limiting: 3 attempts every 10 minutes
+        - OTP validity: 5 minutes
       requestBody:
         required: true
         content:
@@ -370,15 +376,15 @@ paths:
                   type: string
                   format: email
                   example: "user@example.com"
-                  description: البريد الإلكتروني للمستخدم
+                  description: User's email address
                 appContext:
                   type: string
                   enum: [client, driver]
                   example: "client"
                   description: |
-                    نوع المستخدم:
-                    - client: مستخدم عادي (يتم إنشاء حساب تلقائياً)
-                    - driver: سائق (يجب أن يكون موجوداً ومعتمداً)
+                    User type:
+                    - client: Regular user (account created automatically)
+                    - driver: Driver (must exist and be approved)
       responses:
         "200":
           description: OTP sent successfully
@@ -393,7 +399,7 @@ paths:
                   expiresInSeconds:
                     type: integer
                     example: 300
-                    description: مدة صلاحية OTP بالثواني
+                    description: OTP validity duration in seconds
         "400":
           description: Invalid email or context
           content:
@@ -433,19 +439,19 @@ paths:
                   retryAfterSeconds:
                     type: integer
                     example: 600
-                    description: عدد الثواني قبل المحاولة مرة أخرى
+                    description: Seconds before retry is allowed
 
   /api/auth/verify-otp:
     post:
       tags:
         - Authentication
-      summary: التحقق من OTP والحصول على JWT
+      summary: Verify OTP and get JWT
       description: |
-        التحقق من رمز OTP والحصول على JWT token
-        - للمستخدمين الجدد (client): يتم إنشاء حساب تلقائياً
-        - للسائقين (driver): يجب أن يكون الحساب موجوداً
-        - JWT صالح لمدة 7 أيام
-        - يتم إرجاع token في الاستجابة وفي Cookie
+        Verify OTP code and get JWT token
+        - For new users (client): Account is created automatically
+        - For drivers: Account must exist
+        - JWT valid for 7 days
+        - Token returned in response and Cookie
       requestBody:
         required: true
         content:
@@ -461,16 +467,16 @@ paths:
                   type: string
                   format: email
                   example: "user@example.com"
-                  description: البريد الإلكتروني
+                  description: Email address
                 code:
                   type: string
                   example: "123456"
-                  description: رمز التحقق المكون من 6 أرقام
+                  description: 6-digit verification code
                 appContext:
                   type: string
                   enum: [client, driver]
                   example: "client"
-                  description: نوع المستخدم
+                  description: User type
       responses:
         "200":
           description: Verification successful
@@ -491,7 +497,7 @@ paths:
                   token:
                     type: string
                     example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                    description: JWT token صالح لمدة 7 أيام
+                    description: JWT token valid for 7 days
                   user:
                     type: object
                     properties:
@@ -533,7 +539,7 @@ paths:
     post:
       tags:
         - Authentication
-      summary: تسجيل دخول الأدمن
+      summary: Admin login
       requestBody:
         required: true
         content:
@@ -559,7 +565,7 @@ paths:
     get:
       tags:
         - Profile
-      summary: جلب بيانات المستخدم الحالي
+      summary: Get current user profile
       security:
         - bearerAuth: []
       responses:
@@ -573,7 +579,7 @@ paths:
     patch:
       tags:
         - Profile
-      summary: تعديل بيانات المستخدم
+      summary: Update user profile
       security:
         - bearerAuth: []
       requestBody:
@@ -591,14 +597,107 @@ paths:
         "200":
           description: Profile updated
 
+  # ==================== Drivers ====================
+  /api/drivers/location:
+    put:
+      tags:
+        - Drivers
+      summary: 🚗 Update driver location
+      description: |
+        Driver updates their current location
+        - Used when opening the app or pressing "Update Location" button
+        - Saves last update timestamp (lastLocationUpdate)
+        - Required for drivers only (role=DRIVER)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - latitude
+                - longitude
+              properties:
+                latitude:
+                  type: number
+                  minimum: -90
+                  maximum: 90
+                  example: 24.7136
+                  description: Latitude
+                longitude:
+                  type: number
+                  minimum: -180
+                  maximum: 180
+                  example: 46.6753
+                  description: Longitude
+      responses:
+        "200":
+          description: Location updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      latitude:
+                        type: number
+                        example: 24.7136
+                      longitude:
+                        type: number
+                        example: 46.6753
+                      lastLocationUpdate:
+                        type: string
+                        format: date-time
+                        example: "2026-05-03T14:12:53.000Z"
+        "400":
+          description: Invalid coordinates
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid latitude or longitude"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Missing or invalid authorization header"
+        "403":
+          description: Forbidden - Not a driver
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Unauthorized - Driver access only"
+
   /api/profile/driver:
     get:
       tags:
         - Profile
-      summary: جلب بيانات السائق الكاملة
+      summary: Get complete driver profile
       description: |
-        يجلب بيانات السائق الكاملة للمستخدم الحالي
-        - يجب أن يكون المستخدم سائقاً (role=DRIVER)
+        Fetches complete driver profile for current user
+        - User must be a driver (role=DRIVER)
       security:
         - bearerAuth: []
       responses:
@@ -612,10 +711,10 @@ paths:
     patch:
       tags:
         - Profile
-      summary: تعديل بيانات السائق
+      summary: Update driver profile
       description: |
-        السائق يعدل بياناته الشخصية
-        - لا يمكن تعديل isApproved (الأدمن فقط)
+        Driver updates their personal information
+        - Cannot modify isApproved (admin only)
       security:
         - bearerAuth: []
       requestBody:
@@ -637,13 +736,13 @@ paths:
                   type: integer
                 isOnline:
                   type: boolean
-                  description: تحديث حالة الاتصال
+                  description: Update online status
                 latitude:
                   type: number
-                  description: تحديث الموقع الحالي
+                  description: Update current location
                 longitude:
                   type: number
-                  description: تحديث الموقع الحالي
+                  description: Update current location
       responses:
         "200":
           description: Driver profile updated
@@ -653,10 +752,10 @@ paths:
     get:
       tags:
         - Rides - Passenger
-      summary: 🧑 جلب رحلات الراكب
+      summary: 🧑 Get passenger rides
       description: |
-        يجلب رحلات المستخدم الحالي كراكب (الرحلات اللي طلبها)
-        - يستخدمه الراكب لعرض رحلاته
+        Fetches rides for current user as passenger (rides they requested)
+        - Used by passenger to view their rides
       security:
         - bearerAuth: []
       parameters:
@@ -693,12 +792,12 @@ paths:
     post:
       tags:
         - Rides - Passenger
-      summary: 🧑 إنشاء رحلة جديدة (طلب رحلة)
+      summary: 🧑 Create new ride (request ride)
       description: |
-        الراكب ينشئ طلب رحلة جديدة
-        - يحدد نقطة الانطلاق والوجهة
-        - يختار نوع الرحلة (STANDARD أو CARPOOLING)
-        - النظام يحسب السعر تلقائياً (systemFare)
+        Passenger creates a new ride request
+        - Specifies pickup and dropoff points
+        - Chooses ride type (STANDARD or CARPOOLING)
+        - System calculates fare automatically (systemFare)
       security:
         - bearerAuth: []
       requestBody:
@@ -716,36 +815,36 @@ paths:
                 pickupLat:
                   type: number
                   example: 24.7136
-                  description: خط العرض لنقطة الانطلاق
+                  description: Pickup point latitude
                 pickupLng:
                   type: number
                   example: 46.6753
-                  description: خط الطول لنقطة الانطلاق
+                  description: Pickup point longitude
                 pickupAddress:
                   type: string
-                  example: "شارع الملك فهد، الرياض"
+                  example: "King Fahd Road, Riyadh"
                 dropoffLat:
                   type: number
                   example: 24.7736
-                  description: خط العرض للوجهة
+                  description: Dropoff point latitude
                 dropoffLng:
                   type: number
                   example: 46.7353
-                  description: خط الطول للوجهة
+                  description: Dropoff point longitude
                 dropoffAddress:
                   type: string
-                  example: "مطار الملك خالد الدولي"
+                  example: "King Khalid International Airport"
                 type:
                   type: string
                   enum: [STANDARD, CARPOOLING]
                   default: STANDARD
-                  description: نوع الرحلة
+                  description: Ride type
                 maxPassengers:
                   type: integer
                   minimum: 1
                   maximum: 4
                   default: 1
-                  description: الحد الأقصى للركاب (للـ CARPOOLING فقط)
+                  description: Maximum passengers (for CARPOOLING only)
       responses:
         "201":
           description: Ride created successfully
@@ -759,11 +858,11 @@ paths:
     get:
       tags:
         - Rides - Driver
-      summary: 🚗 أقرب الرحلات المتاحة (للسائق)
+      summary: 🚗 Nearby available rides (for driver)
       description: |
-        السائق يشوف الرحلات القريبة منه والمتاحة للقبول
-        - يعرض فقط الرحلات بحالة PENDING
-        - يحسب المسافة من موقع السائق الحالي
+        Driver views nearby rides available for acceptance
+        - Shows only rides with PENDING status
+        - Calculates distance from driver's current location
       security:
         - bearerAuth: []
       parameters:
@@ -772,21 +871,21 @@ paths:
           required: true
           schema:
             type: number
-          description: موقع السائق الحالي - خط العرض
+          description: Driver's current location - latitude
           example: 24.7136
         - in: query
           name: lng
           required: true
           schema:
             type: number
-          description: موقع السائق الحالي - خط الطول
+          description: Driver's current location - longitude
           example: 46.6753
         - in: query
           name: radius
           schema:
             type: number
             default: 10
-          description: نطاق البحث بالكيلومتر
+          description: Search radius in kilometers
       responses:
         "200":
           description: Nearby available rides
@@ -801,11 +900,11 @@ paths:
     post:
       tags:
         - Rides - Driver
-      summary: 🚗 قبول الرحلة (السائق فقط)
+      summary: 🚗 Accept ride (driver only)
       description: |
-        السائق يقبل طلب الرحلة
-        - يغير حالة الرحلة من PENDING إلى ACCEPTED
-        - يربط السائق بالرحلة
+        Driver accepts ride request
+        - Changes ride status from PENDING to ACCEPTED
+        - Links driver to the ride
       security:
         - bearerAuth: []
       parameters:
@@ -814,7 +913,7 @@ paths:
           required: true
           schema:
             type: string
-          description: معرف الرحلة
+          description: Ride ID
       responses:
         "200":
           description: Ride accepted successfully
@@ -827,13 +926,13 @@ paths:
     patch:
       tags:
         - Rides - Driver
-      summary: 🚗 تحديث حالة الرحلة (السائق فقط)
+      summary: 🚗 Update ride status (driver only)
       description: |
-        السائق يحدث حالة الرحلة أثناء تنفيذها
-        - DRIVER_ARRIVED: السائق وصل لنقطة الانطلاق
-        - IN_PROGRESS: بدء الرحلة
-        - COMPLETED: إنهاء الرحلة
-        - CANCELLED: إلغاء الرحلة
+        Driver updates ride status during execution
+        - DRIVER_ARRIVED: Driver arrived at pickup point
+        - IN_PROGRESS: Start ride
+        - COMPLETED: Complete ride
+        - CANCELLED: Cancel ride
       security:
         - bearerAuth: []
       parameters:
@@ -857,10 +956,10 @@ paths:
                   example: IN_PROGRESS
                 currentLat:
                   type: number
-                  description: الموقع الحالي للسائق (اختياري)
+                  description: Driver's current location (optional)
                 currentLng:
                   type: number
-                  description: الموقع الحالي للسائق (اختياري)
+                  description: Driver's current location (optional)
       responses:
         "200":
           description: Ride status updated
@@ -869,11 +968,11 @@ paths:
     get:
       tags:
         - Rides - Shared
-      summary: 📋 تفاصيل رحلة (مشترك)
+      summary: 📋 Ride details (shared)
       description: |
-        يجلب تفاصيل رحلة معينة
-        - متاح للراكب والسائق
-        - يعرض كل تفاصيل الرحلة
+        Fetches details of a specific ride
+        - Available for passenger and driver
+        - Shows all ride details
       security:
         - bearerAuth: []
       parameters:
@@ -894,11 +993,11 @@ paths:
     post:
       tags:
         - Rides - Shared
-      summary: ❌ إلغاء الرحلة (مشترك)
+      summary: ❌ Cancel ride (shared)
       description: |
-        إلغاء الرحلة - متاح للراكب والسائق
-        - الراكب يقدر يلغي قبل ما السائق يقبل
-        - السائق يقدر يلغي بعد القبول مع ذكر السبب
+        Cancel ride - available for passenger and driver
+        - Passenger can cancel before driver accepts
+        - Driver can cancel after acceptance with reason
       security:
         - bearerAuth: []
       parameters:
@@ -915,7 +1014,7 @@ paths:
               properties:
                 reason:
                   type: string
-                  example: "ظرف طارئ"
+                  example: "Emergency situation"
       responses:
         "200":
           description: Ride cancelled successfully
@@ -925,12 +1024,12 @@ paths:
     post:
       tags:
         - Rides - Negotiation
-      summary: 💰 إنشاء/تحديث عرض تفاوض
+      summary: 💰 Create/update negotiation offer
       description: |
-        الراكب أو السائق يقدم عرض سعر للتفاوض
-        - الراكب يقدر يعرض سعر أقل
-        - السائق يقدر يعرض سعر أعلى
-        - كل طرف يقدر يحدث عرضه
+        Passenger or driver submits price negotiation offer
+        - Passenger can offer lower price
+        - Driver can offer higher price
+        - Each party can update their offer
       security:
         - bearerAuth: []
       parameters:
@@ -951,11 +1050,11 @@ paths:
                 offeredPrice:
                   type: number
                   example: 25.50
-                  description: السعر المقترح
+                  description: Proposed price
                 message:
                   type: string
-                  example: "هل ممكن نخفض السعر شوي؟"
-                  description: رسالة اختيارية للطرف الآخر
+                  example: "Can we lower the price a bit?"
+                  description: Optional message to the other party
       responses:
         "200":
           description: Negotiation offer created/updated
@@ -963,11 +1062,11 @@ paths:
     patch:
       tags:
         - Rides - Negotiation
-      summary: 💰 قبول/رفض التفاوض
+      summary: 💰 Accept/reject negotiation
       description: |
-        الطرف الآخر يقبل أو يرفض عرض التفاوض
-        - إذا قبل: يتحدث سعر الرحلة
-        - إذا رفض: يبقى السعر الأصلي
+        Other party accepts or rejects negotiation offer
+        - If accepted: ride fare is updated
+        - If rejected: original price remains
       security:
         - bearerAuth: []
       parameters:
@@ -998,7 +1097,7 @@ paths:
     get:
       tags:
         - Admin - Users
-      summary: جلب قائمة المستخدمين
+      summary: Get users list
       security:
         - bearerAuth: []
       parameters:
@@ -1024,7 +1123,7 @@ paths:
     post:
       tags:
         - Admin - Users
-      summary: إنشاء مستخدم جديد
+      summary: Create new user
       security:
         - bearerAuth: []
       requestBody:
@@ -1055,7 +1154,7 @@ paths:
     get:
       tags:
         - Admin - Users
-      summary: تفاصيل مستخدم
+      summary: User details
       security:
         - bearerAuth: []
       parameters:
@@ -1071,7 +1170,7 @@ paths:
     patch:
       tags:
         - Admin - Users
-      summary: تعديل مستخدم
+      summary: Update user
       security:
         - bearerAuth: []
       parameters:
@@ -1099,7 +1198,7 @@ paths:
     delete:
       tags:
         - Admin - Users
-      summary: حذف مستخدم
+      summary: Delete user
       security:
         - bearerAuth: []
       parameters:
@@ -1117,7 +1216,7 @@ paths:
     get:
       tags:
         - Admin - Drivers
-      summary: جلب قائمة السائقين
+      summary: Get drivers list
       security:
         - bearerAuth: []
       parameters:
@@ -1125,12 +1224,12 @@ paths:
           name: isApproved
           schema:
             type: boolean
-          description: تصفية حسب حالة الموافقة
+          description: Filter by approval status
         - in: query
           name: isOnline
           schema:
             type: boolean
-          description: تصفية حسب حالة الاتصال
+          description: Filter by online status
         - in: query
           name: page
           schema:
@@ -1148,11 +1247,11 @@ paths:
     post:
       tags:
         - Admin - Drivers
-      summary: إنشاء سائق جديد
+      summary: Create new driver
       description: |
-        الأدمن ينشئ حساب سائق جديد
-        - يتم إنشاء User بـ role=DRIVER
-        - يتم إنشاء Driver profile مرتبط بالـ User
+        Admin creates new driver account
+        - Creates User with role=DRIVER
+        - Creates Driver profile linked to User
       security:
         - bearerAuth: []
       requestBody:
@@ -1174,7 +1273,7 @@ paths:
                   example: "driver@example.com"
                 name:
                   type: string
-                  example: "محمد أحمد"
+                  example: "Mohammed Ahmed"
                 phone:
                   type: string
                   example: "+966501234567"
@@ -1189,14 +1288,14 @@ paths:
                   example: "ABC-1234"
                 carColor:
                   type: string
-                  example: "أبيض"
+                  example: "White"
                 carYear:
                   type: integer
                   example: 2022
                 isApproved:
                   type: boolean
                   default: false
-                  description: الموافقة على السائق مباشرة
+                  description: Approve driver immediately
       responses:
         "201":
           description: Driver created
@@ -1205,7 +1304,7 @@ paths:
     get:
       tags:
         - Admin - Drivers
-      summary: تفاصيل سائق
+      summary: Driver details
       security:
         - bearerAuth: []
       parameters:
@@ -1221,11 +1320,11 @@ paths:
     patch:
       tags:
         - Admin - Drivers
-      summary: تعديل سائق والموافقة عليه
+      summary: Update driver and approve
       description: |
-        تعديل بيانات السائق
-        - يمكن تحديث بيانات السيارة
-        - يمكن الموافقة على السائق (isApproved)
+        Update driver information
+        - Can update car information
+        - Can approve driver (isApproved)
       security:
         - bearerAuth: []
       parameters:
@@ -1252,7 +1351,7 @@ paths:
                   type: integer
                 isApproved:
                   type: boolean
-                  description: الموافقة على السائق أو إلغاء الموافقة
+                  description: Approve or revoke driver approval
       responses:
         "200":
           description: Driver updated
@@ -1260,7 +1359,7 @@ paths:
     delete:
       tags:
         - Admin - Drivers
-      summary: حذف سائق
+      summary: Delete driver
       security:
         - bearerAuth: []
       parameters:

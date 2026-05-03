@@ -1,19 +1,9 @@
-// app/api/profile/route.ts
 
 import { unauthorized, verifyToken } from "@/services/auth/auth";
 import { getProfileService, updateProfileService } from "@/services/profile/profile.service";
 import { NextRequest } from "next/server";
 
-// export async function GET(req: NextRequest) {
-//     const payload = await verifyToken(req);
-//     if (!payload) return unauthorized();
 
-//     const user = await getProfileService(payload);
-
-//     if (!user) return unauthorized();
-
-//     return Response.json({ user });
-// }
 export async function GET(req: NextRequest) {
     const payload = await verifyToken(req);
 

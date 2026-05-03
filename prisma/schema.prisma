@@ -93,10 +93,11 @@ model Driver {
   carColor      String?
   carYear       Int?
 
-  isApproved Boolean @default(false)
-  isOnline   Boolean @default(false)
-  latitude   Float?
-  longitude  Float?
+  isApproved         Boolean   @default(false)
+  isOnline           Boolean   @default(false)
+  latitude           Float?
+  longitude          Float?
+  lastLocationUpdate DateTime?
 
   rating     Float @default(0)
   totalRides Int   @default(0)
@@ -298,5 +299,6 @@ model OtpCode {
   attempts  Int      @default(0)
 
   createdAt DateTime @default(now())
+
   @@index([email, used, expiresAt])
 }
