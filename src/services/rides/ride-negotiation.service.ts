@@ -23,13 +23,8 @@ export async function negotiateRideService(
     const { amount, message } = data;
 
     const ride = await prisma.ride.findUnique({
-        where: { id: parseInt(rideId) },
+        where: { id: Number(rideId) },
         include: {
-            driver: {
-                include: {
-                    user: true,
-                },
-            },
             negotiation: true,
         },
     });
@@ -38,39 +33,42 @@ export async function negotiateRideService(
         throw new NotFoundError("Ride not found");
     }
 
-    const isClient = ride.clientId === payload.userId;
-    const isDriver = ride.driver?.userId === payload.userId;
-
-    if (!isClient && !isDriver) {
-        throw new ForbiddenError("You don't have permission to negotiate this ride");
+    // 🔥 IMPORTANT RULE: negotiation only in REQUESTED
+    if (ride.status !== "REQUESTED") {
+        throw new BadRequestError(
+            "Negotiation is only allowed before ride is accepted"
+        );
     }
 
-    if (ride.status !== "REQUESTED") {
-        throw new BadRequestError("Can only negotiate on requested rides");
+    const isClient = ride.clientId === payload.userId;
+    const isDriver = payload.role === "DRIVER";
+
+    if (!isClient && !isDriver) {
+        throw new ForbiddenError("You can't negotiate this ride");
     }
 
     const offeredBy = isClient ? "CLIENT" : "DRIVER";
 
-    // إذا في تفاوض موجود
+    // =========================
+    // EXISTING NEGOTIATION
+    // =========================
     if (ride.negotiation) {
         if (ride.negotiation.expiresAt < new Date()) {
             await prisma.negotiation.update({
                 where: { id: ride.negotiation.id },
                 data: { status: "EXPIRED" },
             });
-            throw new BadRequestError("Negotiation has expired");
+
+            throw new BadRequestError("Negotiation expired");
         }
 
         if (
             ride.negotiation.status === "ACCEPTED" ||
             ride.negotiation.status === "REJECTED"
         ) {
-            throw new BadRequestError(
-                `Negotiation is already ${ride.negotiation.status.toLowerCase()}`
-            );
+            throw new BadRequestError("Negotiation already finished");
         }
 
-        // تحديث التفاوض
         const updateData: any = { status: "COUNTERED" };
 
         if (isClient) {
@@ -79,22 +77,22 @@ export async function negotiateRideService(
             updateData.driverCounter = amount;
         }
 
-        const updatedNegotiation = await prisma.negotiation.update({
+        const updated = await prisma.negotiation.update({
             where: { id: ride.negotiation.id },
             data: updateData,
         });
 
         await prisma.negotiationOffer.create({
             data: {
-                negotiationId: updatedNegotiation.id,
+                negotiationId: updated.id,
                 offeredBy,
                 amount,
                 message,
             },
         });
 
-        const fullNegotiation = await prisma.negotiation.findUnique({
-            where: { id: updatedNegotiation.id },
+        const full = await prisma.negotiation.findUnique({
+            where: { id: updated.id },
             include: {
                 history: {
                     orderBy: { createdAt: "asc" },
@@ -102,12 +100,14 @@ export async function negotiateRideService(
             },
         });
 
-        return { negotiation: fullNegotiation };
+        return { negotiation: full };
     }
 
-    // إنشاء تفاوض جديد
+    // =========================
+    // CREATE NEW NEGOTIATION
+    // =========================
     if (!isClient) {
-        throw new ForbiddenError("Only clients can start negotiation");
+        throw new ForbiddenError("Only client can start negotiation");
     }
 
     const negotiation = await prisma.negotiation.create({
@@ -116,7 +116,7 @@ export async function negotiateRideService(
             systemFare: ride.systemFare!,
             clientOffer: amount,
             status: "PENDING",
-            expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 دقائق
+            expiresAt: new Date(Date.now() + 10 * 60 * 1000),
             history: {
                 create: {
                     offeredBy: "CLIENT",
@@ -132,7 +132,6 @@ export async function negotiateRideService(
 
     return { negotiation };
 }
-
 /**
  * Accept or reject a negotiation offer
  * Updates ride fare if accepted
@@ -145,28 +144,25 @@ export async function respondToNegotiationService(
     const { action } = data;
 
     const ride = await prisma.ride.findUnique({
-        where: { id: parseInt(rideId) },
+        where: { id: Number(rideId) },
         include: {
-            driver: {
-                include: {
-                    user: true,
-                },
-            },
             negotiation: true,
         },
     });
 
     if (!ride || !ride.negotiation) {
-        throw new NotFoundError("Ride or negotiation not found");
+        throw new NotFoundError("Negotiation not found");
+    }
+
+    if (ride.status !== "REQUESTED") {
+        throw new BadRequestError("Ride already accepted, negotiation locked");
     }
 
     const isClient = ride.clientId === payload.userId;
-    const isDriver = ride.driver?.userId === payload.userId;
+    const isDriver = payload.role === "DRIVER";
 
     if (!isClient && !isDriver) {
-        throw new ForbiddenError(
-            "You don't have permission to respond to this negotiation"
-        );
+        throw new ForbiddenError("No permission");
     }
 
     if (ride.negotiation.expiresAt < new Date()) {
@@ -174,49 +170,52 @@ export async function respondToNegotiationService(
             where: { id: ride.negotiation.id },
             data: { status: "EXPIRED" },
         });
-        throw new BadRequestError("Negotiation has expired");
+
+        throw new BadRequestError("Negotiation expired");
     }
 
+    // =========================
+    // ACCEPT
+    // =========================
     if (action === "accept") {
         let agreedFare: number;
+
         if (isClient && ride.negotiation.driverCounter) {
             agreedFare = ride.negotiation.driverCounter;
         } else if (isDriver && ride.negotiation.clientOffer) {
             agreedFare = ride.negotiation.clientOffer;
         } else {
-            throw new BadRequestError("No offer to accept");
+            throw new BadRequestError("No valid offer");
         }
 
-        const updatedNegotiation = await prisma.negotiation.update({
+        const updated = await prisma.negotiation.update({
             where: { id: ride.negotiation.id },
             data: {
                 status: "ACCEPTED",
                 agreedFare,
             },
-            include: {
-                history: {
-                    orderBy: { createdAt: "asc" },
-                },
-            },
         });
 
+        // optional: update ride fare BEFORE acceptance
         await prisma.ride.update({
-            where: { id: parseInt(rideId) },
-            data: { fare: agreedFare },
-        });
-
-        return { negotiation: updatedNegotiation };
-    } else {
-        const updatedNegotiation = await prisma.negotiation.update({
-            where: { id: ride.negotiation.id },
-            data: { status: "REJECTED" },
-            include: {
-                history: {
-                    orderBy: { createdAt: "asc" },
-                },
+            where: { id: Number(rideId) },
+            data: {
+                systemFare: agreedFare,
             },
         });
 
-        return { negotiation: updatedNegotiation };
+        return { negotiation: updated };
     }
+
+    // =========================
+    // REJECT
+    // =========================
+    const updated = await prisma.negotiation.update({
+        where: { id: ride.negotiation.id },
+        data: {
+            status: "REJECTED",
+        },
+    });
+
+    return { negotiation: updated };
 }

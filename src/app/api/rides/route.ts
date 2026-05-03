@@ -11,7 +11,6 @@ import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
   const payload = await verifyToken(req);
-  if (!payload) return unauthorized();
 
   try {
     const body = await req.json();
@@ -34,7 +33,6 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   const payload = await verifyToken(req);
-  if (!payload) return unauthorized();
 
   try {
     const { searchParams } = new URL(req.url);

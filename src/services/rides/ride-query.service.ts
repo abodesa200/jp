@@ -159,65 +159,85 @@ export async function getNearbyRidesService(
  * Includes client, driver, negotiation, passengers, payment, and review
  */
 export async function getRideDetailsService(payload: Payload, rideId: string) {
-    const ride = await prisma.ride.findUnique({
-        where: { id: parseInt(rideId) },
-        include: {
-            client: {
-                select: {
-                    id: true,
-                    name: true,
-                    phone: true,
-                    avatarUrl: true,
-                },
-            },
-            driver: {
-                include: {
-                    user: {
-                        select: {
-                            id: true,
-                            name: true,
-                            phone: true,
-                            avatarUrl: true,
-                        },
-                    },
-                },
-            },
-            negotiation: {
-                include: {
-                    history: {
-                        orderBy: { createdAt: "asc" },
-                    },
-                },
-            },
-            passengers: {
-                include: {
-                    client: {
-                        select: {
-                            id: true,
-                            name: true,
-                            phone: true,
-                            avatarUrl: true,
-                        },
-                    },
-                },
-            },
-            payment: true,
-            review: true,
+  const ride = await prisma.ride.findUnique({
+    where: { id: Number(rideId) },
+    include: {
+      client: {
+        select: {
+          id: true,
+          name: true,
+          phone: true,
+          avatarUrl: true,
         },
-    });
+      },
+      driver: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              phone: true,
+              avatarUrl: true,
+            },
+          },
+        },
+      },
+      negotiation: {
+        include: {
+          history: {
+            orderBy: { createdAt: "asc" },
+          },
+        },
+      },
+      passengers: {
+        include: {
+          client: {
+            select: {
+              id: true,
+              name: true,
+              phone: true,
+              avatarUrl: true,
+            },
+          },
+        },
+      },
+      payment: true,
+      review: true,
+    },
+  });
 
-    if (!ride) {
-        throw new NotFoundError("Ride not found");
-    }
+  if (!ride) {
+    throw new NotFoundError("Ride not found");
+  }
 
-    // التحقق من الصلاحيات
-    const isClient = ride.clientId === payload.userId;
-    const isDriver = ride.driver?.userId === payload.userId;
-    const isAdmin = payload.role === "ADMIN";
+  const isClient = ride.clientId === payload.userId;
+  const isAdmin = payload.role === "ADMIN";
+  const isDriver = payload.role === "DRIVER";
 
-    if (!isClient && !isDriver && !isAdmin) {
-        throw new ForbiddenError("You don't have access to this ride");
+  // -------------------------
+  // CLIENT + ADMIN
+  // -------------------------
+  if (isClient || isAdmin) {
+    return { ride };
+  }
+
+  // -------------------------
+  // DRIVER LOGIC
+  // -------------------------
+  if (isDriver) {
+    const canAccess =
+      ride.status === "REQUESTED" ||
+      ride.driver?.userId === payload.userId;
+
+    if (!canAccess) {
+      throw new ForbiddenError("You don't have access to this ride");
     }
 
     return { ride };
+  }
+
+  // -------------------------
+  // FALLBACK
+  // -------------------------
+  throw new ForbiddenError("You don't have access to this ride");
 }
