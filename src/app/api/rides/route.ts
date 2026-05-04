@@ -1,8 +1,9 @@
-import { handleApiError } from "@/core/http/error-handler";
-import { unauthorized, verifyToken } from "@/services/auth/auth";
-import { createRideService } from "@/services/rides/ride-create.service";
-import { getUserRidesService } from "@/services/rides/ride-query.service";
-import { createRideSchema, getRidesQuerySchema } from "@/services/rides/ride.schema";
+/**
+ * Rides API Routes
+ * Thin layer that delegates to the controller
+ */
+
+import { rideController } from "@/server/modules/rides/ride.controller";
 import { NextRequest } from "next/server";
 
 // ─────────────────────────────────────────────
@@ -10,21 +11,7 @@ import { NextRequest } from "next/server";
 // ─────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
-  const payload = await verifyToken(req);
-
-  try {
-    const body = await req.json();
-    const data = createRideSchema.parse(body);
-
-    const result = await createRideService(payload, data);
-
-    return Response.json({
-      success: true,
-      data: result,
-    });
-  } catch (error) {
-    return handleApiError(error);
-  }
+  return rideController.createRide(req);
 }
 
 // ─────────────────────────────────────────────
@@ -32,23 +19,5 @@ export async function POST(req: NextRequest) {
 // ─────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
-  const payload = await verifyToken(req);
-
-  try {
-    const { searchParams } = new URL(req.url);
-    const query = getRidesQuerySchema.parse({
-      status: searchParams.get("status") || undefined,
-      page: searchParams.get("page") || undefined,
-      limit: searchParams.get("limit") || undefined,
-    });
-
-    const result = await getUserRidesService(payload, query);
-
-    return Response.json({
-      success: true,
-      data: result,
-    });
-  } catch (error) {
-    return handleApiError(error);
-  }
+  return rideController.getUserRides(req);
 }

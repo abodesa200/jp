@@ -33,12 +33,10 @@ export async function createRideService(payload: Payload, data: CreateRideDTO) {
         maxPassengers,
     } = data;
 
-    // حساب المسافة والسعر
     const distance = calculateDistance(pickupLat, pickupLng, dropoffLat, dropoffLng);
     const systemFare = calculateFare(distance);
     const estimatedDuration = calculateEstimatedDuration(distance);
 
-    // إنشاء الرحلة
     const ride = await prisma.ride.create({
         data: {
             clientId: payload.userId,

@@ -1,7 +1,7 @@
 // Standalone Socket.IO Server - Clean Architecture
 import { createServer } from "http";
 import { Server } from "socket.io";
-import { prisma } from "./src/lib/prisma.js";
+import { prisma } from "../prisma";
 
 const PORT = process.env.SOCKET_PORT || 3001;
 
