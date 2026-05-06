@@ -15,6 +15,7 @@ export function useSocket({
   autoConnect = true,
 }: UseSocketOptions) {
   const [isConnected, setIsConnected] = useState(false);
+  const [socket, setSocket] = useState<Socket | null>(null);
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
@@ -23,36 +24,38 @@ export function useSocket({
     const socketUrl =
       process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001";
 
-    const socket = io(socketUrl, {
+    const newSocket = io(socketUrl, {
       auth: { userId, role },
       autoConnect: true,
     });
 
-    socket.on("connect", () => {
-      console.log("✅ Socket connected:", socket.id);
+    newSocket.on("connect", () => {
+      console.log("✅ Socket connected:", newSocket.id);
       setIsConnected(true);
     });
 
-    socket.on("disconnect", () => {
+    newSocket.on("disconnect", () => {
       console.log("❌ Socket disconnected");
       setIsConnected(false);
     });
 
-    socket.on("connect_error", (error) => {
+    newSocket.on("connect_error", (error) => {
       console.error("Socket connection error:", error);
       setIsConnected(false);
     });
 
-    socketRef.current = socket;
+    socketRef.current = newSocket;
+    setSocket(newSocket);
 
     return () => {
-      socket.disconnect();
+      newSocket.disconnect();
       socketRef.current = null;
+      setSocket(null);
     };
   }, [userId, role, autoConnect]);
 
   return {
-    socket: socketRef.current,
+    socket,
     isConnected,
   };
 }

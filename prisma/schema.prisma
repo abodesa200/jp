@@ -74,6 +74,11 @@ model User {
   tickets           SupportTicket[]
   carpoolPassengers RidePassenger[]
 
+  notifications     Notification[]
+  settings          UserSettings?
+  favoriteLocations FavoriteLocation[]
+  promoUsages       PromoCodeUsage[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -301,4 +306,100 @@ model OtpCode {
   createdAt DateTime @default(now())
 
   @@index([email, used, expiresAt])
+}
+
+// ─────────────────────────────────────────────
+// Notification
+// ─────────────────────────────────────────────
+
+model Notification {
+  id     Int  @id @default(autoincrement())
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title   String
+  message String
+  isRead  Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+}
+
+// ─────────────────────────────────────────────
+// User Settings
+// ─────────────────────────────────────────────
+
+model UserSettings {
+  id     Int  @id @default(autoincrement())
+  userId Int  @unique
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  language             String  @default("ar") // "ar" | "en"
+  notifyRideUpdates    Boolean @default(true)
+  notifyPromotions     Boolean @default(true)
+  notifySystemMessages Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// Favorite Locations
+// ─────────────────────────────────────────────
+
+model FavoriteLocation {
+  id     Int  @id @default(autoincrement())
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name      String
+  address   String?
+  latitude  Float
+  longitude Float
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+// ─────────────────────────────────────────────
+// Promo Codes
+// ─────────────────────────────────────────────
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
+}
+
+model PromoCode {
+  id            Int          @id @default(autoincrement())
+  code          String       @unique
+  discountType  DiscountType
+  discountValue Float
+  expiresAt     DateTime?
+  maxUses       Int? // null = unlimited
+  currentUses   Int          @default(0)
+  isActive      Boolean      @default(true)
+
+  usages PromoCodeUsage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PromoCodeUsage {
+  id          Int  @id @default(autoincrement())
+  promoCodeId Int
+  userId      Int
+  rideId      Int?
+
+  promoCode PromoCode @relation(fields: [promoCodeId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
+
+  usedAt DateTime @default(now())
+
+  @@unique([promoCodeId, userId]) // كل مستخدم يستخدم الكود مرة واحدة
+  @@index([userId])
 }

@@ -279,6 +279,11 @@ components:
           type: string
           format: date-time
           description: Response deadline (e.g., 2 minutes)
+        history:
+          type: array
+          description: History of all offers in this negotiation
+          items:
+            $ref: "#/components/schemas/NegotiationOffer"
         createdAt:
           type: string
           format: date-time
@@ -346,6 +351,103 @@ components:
           nullable: true
           example: "Excellent driver and clean car"
         createdAt:
+          type: string
+          format: date-time
+
+    RidePassenger:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        rideId:
+          type: integer
+          example: 10
+        clientId:
+          type: integer
+          example: 15
+        pickupLat:
+          type: number
+          example: 24.7136
+        pickupLng:
+          type: number
+          example: 46.6753
+        pickupAddress:
+          type: string
+          nullable: true
+          example: "King Fahd Road, Riyadh"
+        dropoffLat:
+          type: number
+          example: 24.7736
+        dropoffLng:
+          type: number
+          example: 46.7353
+        dropoffAddress:
+          type: string
+          nullable: true
+          example: "King Khalid International Airport"
+        fare:
+          type: number
+          nullable: true
+          example: 15.00
+          description: Passenger's share of the fare
+        joinedAt:
+          type: string
+          format: date-time
+        paymentId:
+          type: integer
+          nullable: true
+
+    NegotiationOffer:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        negotiationId:
+          type: integer
+          example: 1
+        offeredBy:
+          type: string
+          enum: [CLIENT, DRIVER]
+          example: "CLIENT"
+          description: Who made this offer
+        amount:
+          type: number
+          example: 30.00
+          description: Offered price
+        message:
+          type: string
+          nullable: true
+          example: "Can we lower the price a bit?"
+          description: Optional message with the offer
+        createdAt:
+          type: string
+          format: date-time
+
+    SupportTicket:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        userId:
+          type: integer
+          example: 10
+        subject:
+          type: string
+          example: "Issue with payment"
+        message:
+          type: string
+          example: "I was charged twice for the same ride"
+        isResolved:
+          type: boolean
+          example: false
+          description: Whether the ticket has been resolved
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
           type: string
           format: date-time
 
@@ -566,6 +668,10 @@ paths:
       tags:
         - Profile
       summary: Get current user profile
+      description: |
+        Fetches current user profile
+        - For drivers: includes driver information (car details, rating, etc.)
+        - For clients: returns basic user information
       security:
         - bearerAuth: []
       responses:
@@ -574,12 +680,24 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
+                allOf:
+                  - $ref: "#/components/schemas/User"
+                  - type: object
+                    properties:
+                      driver:
+                        nullable: true
+                        description: Driver information (only for users with role=DRIVER)
+                        allOf:
+                          - $ref: "#/components/schemas/Driver"
 
     patch:
       tags:
         - Profile
       summary: Update user profile
+      description: |
+        Update user profile information
+        - Can update basic user info (name, email, avatarUrl)
+        - For drivers: can also update driver info (car details, online status)
       security:
         - bearerAuth: []
       requestBody:
@@ -591,11 +709,56 @@ paths:
               properties:
                 name:
                   type: string
+                  example: "Ahmed Mohammed"
                 email:
                   type: string
+                  format: email
+                  example: "user@example.com"
+                avatarUrl:
+                  type: string
+                  example: "https://example.com/avatar.jpg"
+                driverInfo:
+                  type: object
+                  description: Driver-specific information (only for drivers)
+                  properties:
+                    licenseNumber:
+                      type: string
+                    carModel:
+                      type: string
+                    carPlate:
+                      type: string
+                    carColor:
+                      type: string
+                    carYear:
+                      type: integer
+                    isOnline:
+                      type: boolean
+                      description: Update online status
       responses:
         "200":
           description: Profile updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+                  driver:
+                    nullable: true
+                    description: Updated driver info (only for drivers)
+                    allOf:
+                      - $ref: "#/components/schemas/Driver"
+        "409":
+          description: Email already in use
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Email already in use"
 
   # ==================== Drivers ====================
   /api/drivers/location:
@@ -689,63 +852,6 @@ paths:
                   error:
                     type: string
                     example: "Unauthorized - Driver access only"
-
-  /api/profile/driver:
-    get:
-      tags:
-        - Profile
-      summary: Get complete driver profile
-      description: |
-        Fetches complete driver profile for current user
-        - User must be a driver (role=DRIVER)
-      security:
-        - bearerAuth: []
-      responses:
-        "200":
-          description: Driver profile
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Driver"
-
-    patch:
-      tags:
-        - Profile
-      summary: Update driver profile
-      description: |
-        Driver updates their personal information
-        - Cannot modify isApproved (admin only)
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                licenseNumber:
-                  type: string
-                carModel:
-                  type: string
-                carPlate:
-                  type: string
-                carColor:
-                  type: string
-                carYear:
-                  type: integer
-                isOnline:
-                  type: boolean
-                  description: Update online status
-                latitude:
-                  type: number
-                  description: Update current location
-                longitude:
-                  type: number
-                  description: Update current location
-      responses:
-        "200":
-          description: Driver profile updated
 
   # ==================== Rides - Passenger APIs ====================
   /api/rides:
@@ -1210,6 +1316,387 @@ paths:
       responses:
         "200":
           description: User deleted
+
+  # ==================== Admin - Stats ====================
+  /api/admin/stats:
+    get:
+      tags:
+        - Admin - Stats
+      summary: Get dashboard statistics
+      description: |
+        Fetches comprehensive dashboard statistics including:
+        - Overview: Total users, drivers, rides, revenue
+        - Recent activity: Last 7 days statistics
+        - Top drivers by rating
+        - Recent rides
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Dashboard statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  overview:
+                    type: object
+                    properties:
+                      totalUsers:
+                        type: integer
+                        example: 1500
+                      totalDrivers:
+                        type: integer
+                        example: 250
+                      totalRides:
+                        type: integer
+                        example: 5000
+                      activeRides:
+                        type: integer
+                        example: 45
+                        description: Rides with status REQUESTED, ACCEPTED, or IN_PROGRESS
+                      completedRides:
+                        type: integer
+                        example: 4500
+                      cancelledRides:
+                        type: integer
+                        example: 455
+                      pendingDrivers:
+                        type: integer
+                        example: 12
+                        description: Drivers waiting for approval
+                      onlineDrivers:
+                        type: integer
+                        example: 85
+                        description: Currently online approved drivers
+                      totalRevenue:
+                        type: number
+                        example: 125000.50
+                        description: Total revenue from completed rides
+                  recent:
+                    type: object
+                    properties:
+                      rides:
+                        type: integer
+                        example: 350
+                        description: Rides in last 7 days
+                      users:
+                        type: integer
+                        example: 75
+                        description: New users in last 7 days
+                      drivers:
+                        type: integer
+                        example: 15
+                        description: New drivers in last 7 days
+                  topDrivers:
+                    type: array
+                    description: Top 5 drivers by rating
+                    items:
+                      allOf:
+                        - $ref: "#/components/schemas/Driver"
+                        - type: object
+                          properties:
+                            user:
+                              type: object
+                              properties:
+                                id:
+                                  type: integer
+                                name:
+                                  type: string
+                                phone:
+                                  type: string
+                                avatarUrl:
+                                  type: string
+                  recentRides:
+                    type: array
+                    description: Last 10 rides
+                    items:
+                      $ref: "#/components/schemas/Ride"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Admin access only
+
+  # ==================== Admin - Rides ====================
+  /api/admin/rides:
+    get:
+      tags:
+        - Admin - Rides
+      summary: Get all rides (admin view)
+      description: |
+        Fetches all rides with pagination and filtering
+        - Includes client and driver information
+        - Supports filtering by status
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [REQUESTED, ACCEPTED, DRIVER_ARRIVED, IN_PROGRESS, COMPLETED, CANCELLED]
+          description: Filter by ride status
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+      responses:
+        "200":
+          description: List of rides with pagination
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rides:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: "#/components/schemas/Ride"
+                        - type: object
+                          properties:
+                            client:
+                              type: object
+                              properties:
+                                id:
+                                  type: integer
+                                name:
+                                  type: string
+                                phone:
+                                  type: string
+                                avatarUrl:
+                                  type: string
+                            driver:
+                              type: object
+                              nullable: true
+                              properties:
+                                id:
+                                  type: integer
+                                user:
+                                  type: object
+                                  properties:
+                                    id:
+                                      type: integer
+                                    name:
+                                      type: string
+                                    phone:
+                                      type: string
+                                    avatarUrl:
+                                      type: string
+                  pagination:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                        example: 5000
+                      page:
+                        type: integer
+                        example: 1
+                      limit:
+                        type: integer
+                        example: 20
+                      pages:
+                        type: integer
+                        example: 250
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Admin access only
+
+  /api/admin/rides/create:
+    post:
+      tags:
+        - Admin - Rides
+      summary: Create ride (admin)
+      description: |
+        Admin creates a ride on behalf of a client
+        - Can optionally assign a driver immediately
+        - Calculates distance and fare automatically
+        - Sends notifications to client and driver
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - clientId
+                - pickupLat
+                - pickupLng
+                - dropoffLat
+                - dropoffLng
+              properties:
+                clientId:
+                  type: integer
+                  example: 10
+                  description: Client user ID
+                driverId:
+                  type: integer
+                  nullable: true
+                  example: 5
+                  description: Optional driver ID to assign immediately
+                pickupLat:
+                  type: number
+                  example: 24.7136
+                pickupLng:
+                  type: number
+                  example: 46.6753
+                pickupAddress:
+                  type: string
+                  example: "King Fahd Road, Riyadh"
+                dropoffLat:
+                  type: number
+                  example: 24.7736
+                dropoffLng:
+                  type: number
+                  example: 46.7353
+                dropoffAddress:
+                  type: string
+                  example: "King Khalid International Airport"
+                type:
+                  type: string
+                  enum: [STANDARD, CARPOOLING]
+                  default: STANDARD
+                notes:
+                  type: string
+                  description: Optional admin notes
+      responses:
+        "201":
+          description: Ride created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ride:
+                    $ref: "#/components/schemas/Ride"
+                  message:
+                    type: string
+                    example: "Ride created successfully"
+        "400":
+          description: Bad request - Invalid data or driver not approved
+        "404":
+          description: Client or driver not found
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Admin access only
+
+  /api/admin/rides/{id}:
+    get:
+      tags:
+        - Admin - Rides
+      summary: Get ride details (admin)
+      description: |
+        Fetches complete ride details including:
+        - Client and driver information
+        - Negotiation history
+        - Passengers (for carpooling)
+        - Payment information
+        - Review
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Ride ID
+      responses:
+        "200":
+          description: Complete ride details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ride:
+                    allOf:
+                      - $ref: "#/components/schemas/Ride"
+                      - type: object
+                        properties:
+                          client:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                              name:
+                                type: string
+                              phone:
+                                type: string
+                              email:
+                                type: string
+                              avatarUrl:
+                                type: string
+                          driver:
+                            type: object
+                            nullable: true
+                            properties:
+                              id:
+                                type: integer
+                              user:
+                                type: object
+                          negotiation:
+                            $ref: "#/components/schemas/Negotiation"
+                          passengers:
+                            type: array
+                            items:
+                              type: object
+                          payment:
+                            $ref: "#/components/schemas/Payment"
+                          review:
+                            $ref: "#/components/schemas/Review"
+        "404":
+          description: Ride not found
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Admin access only
+
+    delete:
+      tags:
+        - Admin - Rides
+      summary: Delete ride (admin)
+      description: |
+        Admin deletes a ride
+        - Use with caution - this is permanent
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Ride deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        "404":
+          description: Ride not found
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Admin access only
 
   # ==================== Admin - Drivers ====================
   /api/admin/drivers:

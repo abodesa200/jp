@@ -32,7 +32,7 @@ export function RidesTable({
             key: "id",
             label: "ID",
             render: (ride: Ride) => (
-                <span className="font-mono text-xs">{ride.id.slice(0, 8)}...</span>
+                <span className="font-mono text-xs">{ride?.id}...</span>
             ),
         },
         {

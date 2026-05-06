@@ -1,4 +1,4 @@
-import { ConflictError } from "@/core/http/http-errors";
+import { ConflictError, NotFoundError } from "@/core/http/http-errors";
 import { prisma } from "@/lib/prisma";
 import { updateDriverInfo } from "../driver/driver.service";
 import { updateProfileSchema } from "./profile.schema";
@@ -11,70 +11,61 @@ type Payload = {
 export async function getProfileService(payload: Payload) {
     const user = await prisma.user.findUnique({
         where: { id: payload.userId },
-        select: {
-            id: true,
-            phone: true,
-            role: true,
-            name: true,
-            email: true,
-            avatarUrl: true,
-            isVerified: true,
-            createdAt: true,
-            driver:
-                payload.role === "DRIVER"
-                    ? {
-                        select: {
-                            id: true,
-                            licenseNumber: true,
-                            carModel: true,
-                            carPlate: true,
-                            carColor: true,
-                            carYear: true,
-                            isApproved: true,
-                            isOnline: true,
-                            rating: true,
-                            totalRides: true,
-                        },
-                    }
-                    : undefined,
+        include: {
+            driver: true,
         },
     });
 
-    if (!user) return Response.json({ error: "User not found" }, { status: 404 });
+    if (!user) throw new NotFoundError("User not found");
+
+    // إذا مو driver → لا ترجع driver
+    if (user.role !== "DRIVER") {
+        return { ...user, driver: undefined };
+    }
 
     return user;
 }
 
-
 export async function updateProfileService(payload: Payload, body: unknown) {
     const data = updateProfileSchema.parse(body);
 
-    const existing = data.email
-        ? await prisma.user.findUnique({ where: { email: data.email } })
-        : null;
+    const user = await prisma.user.findUnique({
+        where: { id: payload.userId },
+        include: { driver: true },
+    });
 
-    if (existing && existing.id !== payload.userId) {
-        throw new ConflictError("Email already in use");
+    if (!user) throw new NotFoundError("User not found");
+
+    // email check
+    if (data.email) {
+        const existing = await prisma.user.findUnique({
+            where: { email: data.email },
+        });
+
+        if (existing && existing.id !== payload.userId) {
+            throw new ConflictError("Email already in use");
+        }
     }
+
+    const updateData: any = {};
+
+    if ("name" in data) updateData.name = data.name;
+    if ("email" in data) updateData.email = data.email;
+    if ("avatarUrl" in data) updateData.avatarUrl = data.avatarUrl;
 
     const updatedUser = await prisma.user.update({
         where: { id: payload.userId },
-        data: {
-            ...(data.name && { name: data.name }),
-            ...(data.email && { email: data.email }),
-            ...(data.avatarUrl && { avatarUrl: data.avatarUrl }),
-        },
+        data: updateData,
     });
 
     let updatedDriver = null;
 
-    if (payload.role === "DRIVER" && data.driverInfo) {
+    if (user.role === "DRIVER" && data.driverInfo) {
         updatedDriver = await updateDriverInfo(payload.userId, data.driverInfo);
     }
 
     return {
         user: updatedUser,
         ...(updatedDriver && { driver: updatedDriver }),
-
     };
 }

@@ -4,12 +4,14 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { useDrivers } from "../hooks/useDrivers";
+import { CreateDriverDialog } from "./CreateDriverDialog";
 import { DriversFilters } from "./DriversFilters";
 import { DriversTable } from "./DriversTable";
 
 export function DriversView() {
     const [approvedFilter, setApprovedFilter] = useState("all");
     const [searchQuery, setSearchQuery] = useState("");
+    const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
     const {
         drivers,
@@ -18,6 +20,7 @@ export function DriversView() {
         updateParams,
         toggleApproval,
         deleteDriver,
+        refetch,
     } = useDrivers({
         page: 1,
         limit: 20,
@@ -50,12 +53,15 @@ export function DriversView() {
                 description="Manage all platform drivers"
                 action={{
                     label: "Add Driver",
-                    onClick: () => {
-                        // TODO: Implement add driver modal
-                        console.log("Add driver");
-                    },
+                    onClick: () => setCreateDialogOpen(true),
                     icon: Plus,
                 }}
+            />
+
+            <CreateDriverDialog
+                open={createDialogOpen}
+                onOpenChange={setCreateDialogOpen}
+                onSuccess={() => refetch()}
             />
 
             <DriversFilters

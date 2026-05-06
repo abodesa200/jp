@@ -8,10 +8,7 @@ export async function GET(req: NextRequest) {
     const payload = await verifyToken(req);
 
     if (!payload) {
-        return Response.json(
-            { message: "Unauthenticated" },
-            { status: 401 }
-        );
+        return unauthorized();
     }
 
     const user = await getProfileService(payload);

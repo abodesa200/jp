@@ -2,7 +2,7 @@
 
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface AdminRideMapProps {
   pickup: { lat: number; lng: number };
@@ -13,6 +13,28 @@ interface AdminRideMapProps {
   editable?: boolean;
 }
 
+// Damascus center
+const DAMASCUS = { lat: 33.5138, lng: 36.2765 };
+
+async function fetchRoute(
+  points: { lat: number; lng: number }[]
+): Promise<[number, number][]> {
+  const coords = points.map((p) => `${p.lng},${p.lat}`).join(";");
+  const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`;
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.code === "Ok" && data.routes?.[0]) {
+      return data.routes[0].geometry.coordinates.map(
+        ([lng, lat]: [number, number]) => [lat, lng] as [number, number]
+      );
+    }
+  } catch {
+    // fallback to straight line
+  }
+  return points.map((p) => [p.lat, p.lng]);
+}
+
 export default function AdminRideMap({
   pickup,
   dropoff,
@@ -21,144 +43,136 @@ export default function AdminRideMap({
   onDropoffChange,
   editable = true,
 }: AdminRideMapProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const pickupMarkerRef = useRef<L.Marker | null>(null);
   const dropoffMarkerRef = useRef<L.Marker | null>(null);
   const driverMarkerRef = useRef<L.Marker | null>(null);
   const routeLineRef = useRef<L.Polyline | null>(null);
-  const [selectingType, setSelectingType] = useState<
-    "pickup" | "dropoff" | null
-  >(null);
 
+  // Keep latest callbacks in refs so map click handler never goes stale
+  const onPickupChangeRef = useRef(onPickupChange);
+  const onDropoffChangeRef = useRef(onDropoffChange);
+  useEffect(() => { onPickupChangeRef.current = onPickupChange; }, [onPickupChange]);
+  useEffect(() => { onDropoffChangeRef.current = onDropoffChange; }, [onDropoffChange]);
+
+  const [selectingType, setSelectingType] = useState<"pickup" | "dropoff" | null>(null);
+  const selectingTypeRef = useRef<"pickup" | "dropoff" | null>(null);
+  const [locating, setLocating] = useState(false);
+
+  const updateSelectingType = useCallback((val: "pickup" | "dropoff" | null) => {
+    selectingTypeRef.current = val;
+    setSelectingType(val);
+  }, []);
+
+  // Initialize map once
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || !containerRef.current || mapRef.current) return;
 
-    // Initialize map
-    if (!mapRef.current) {
-      const map = L.map("admin-ride-map").setView([pickup.lat, pickup.lng], 13);
+    const map = L.map(containerRef.current).setView(
+      [DAMASCUS.lat, DAMASCUS.lng],
+      12
+    );
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "© OpenStreetMap contributors",
-      }).addTo(map);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "© OpenStreetMap contributors",
+    }).addTo(map);
 
-      mapRef.current = map;
+    mapRef.current = map;
 
-      // Add click handler for editable mode
-      if (editable) {
-        map.on("click", (e) => {
-          if (selectingType === "pickup" && onPickupChange) {
-            onPickupChange(e.latlng.lat, e.latlng.lng);
-            setSelectingType(null);
-          } else if (selectingType === "dropoff" && onDropoffChange) {
-            onDropoffChange(e.latlng.lat, e.latlng.lng);
-            setSelectingType(null);
-          }
-        });
-      }
+    if (editable) {
+      map.on("click", (e) => {
+        const type = selectingTypeRef.current;
+        if (type === "pickup") {
+          onPickupChangeRef.current?.(e.latlng.lat, e.latlng.lng);
+          selectingTypeRef.current = null;
+          setSelectingType(null);
+        } else if (type === "dropoff") {
+          onDropoffChangeRef.current?.(e.latlng.lat, e.latlng.lng);
+          selectingTypeRef.current = null;
+          setSelectingType(null);
+        }
+      });
     }
 
     return () => {
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-      }
+      map.remove();
+      mapRef.current = null;
+      pickupMarkerRef.current = null;
+      dropoffMarkerRef.current = null;
+      driverMarkerRef.current = null;
+      routeLineRef.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Update pickup marker
   useEffect(() => {
     if (!mapRef.current) return;
 
-    const pickupIcon = L.icon({
-      iconUrl:
-        "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png",
-      shadowUrl:
-        "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-      shadowSize: [41, 41],
+    const icon = L.icon({
+      iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png",
+      shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+      iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41],
     });
 
     if (pickupMarkerRef.current) {
       pickupMarkerRef.current.setLatLng([pickup.lat, pickup.lng]);
     } else {
-      pickupMarkerRef.current = L.marker([pickup.lat, pickup.lng], {
-        icon: pickupIcon,
-        draggable: editable,
-      })
+      pickupMarkerRef.current = L.marker([pickup.lat, pickup.lng], { icon, draggable: editable })
         .addTo(mapRef.current)
         .bindPopup("📍 Pickup Location");
 
-      if (editable && onPickupChange) {
+      if (editable) {
         pickupMarkerRef.current.on("dragend", (e) => {
           const pos = e.target.getLatLng();
-          onPickupChange(pos.lat, pos.lng);
+          onPickupChangeRef.current?.(pos.lat, pos.lng);
         });
       }
     }
-  }, [pickup, editable, onPickupChange]);
+  }, [pickup, editable]);
 
   // Update dropoff marker
   useEffect(() => {
     if (!mapRef.current) return;
 
-    const dropoffIcon = L.icon({
-      iconUrl:
-        "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
-      shadowUrl:
-        "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-      shadowSize: [41, 41],
+    const icon = L.icon({
+      iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
+      shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+      iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41],
     });
 
     if (dropoffMarkerRef.current) {
       dropoffMarkerRef.current.setLatLng([dropoff.lat, dropoff.lng]);
     } else {
-      dropoffMarkerRef.current = L.marker([dropoff.lat, dropoff.lng], {
-        icon: dropoffIcon,
-        draggable: editable,
-      })
+      dropoffMarkerRef.current = L.marker([dropoff.lat, dropoff.lng], { icon, draggable: editable })
         .addTo(mapRef.current)
         .bindPopup("🎯 Dropoff Location");
 
-      if (editable && onDropoffChange) {
+      if (editable) {
         dropoffMarkerRef.current.on("dragend", (e) => {
           const pos = e.target.getLatLng();
-          onDropoffChange(pos.lat, pos.lng);
+          onDropoffChangeRef.current?.(pos.lat, pos.lng);
         });
       }
     }
-  }, [dropoff, editable, onDropoffChange]);
+  }, [dropoff, editable]);
 
   // Update driver marker
   useEffect(() => {
     if (!mapRef.current) return;
 
     if (driverLocation) {
-      const driverIcon = L.icon({
-        iconUrl:
-          "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
-        shadowUrl:
-          "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-        popupAnchor: [1, -34],
-        shadowSize: [41, 41],
+      const icon = L.icon({
+        iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
+        shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+        iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41],
       });
 
       if (driverMarkerRef.current) {
-        driverMarkerRef.current.setLatLng([
-          driverLocation.lat,
-          driverLocation.lng,
-        ]);
+        driverMarkerRef.current.setLatLng([driverLocation.lat, driverLocation.lng]);
       } else {
-        driverMarkerRef.current = L.marker(
-          [driverLocation.lat, driverLocation.lng],
-          { icon: driverIcon },
-        )
+        driverMarkerRef.current = L.marker([driverLocation.lat, driverLocation.lng], { icon })
           .addTo(mapRef.current)
           .bindPopup("🚗 Driver Location");
       }
@@ -168,66 +182,92 @@ export default function AdminRideMap({
     }
   }, [driverLocation]);
 
-  // Draw route line
+  // Draw real road route via OSRM
   useEffect(() => {
     if (!mapRef.current) return;
 
-    const points: [number, number][] = [];
+    const routePoints: { lat: number; lng: number }[] = [];
+    if (driverLocation) routePoints.push(driverLocation);
+    routePoints.push(pickup);
+    routePoints.push(dropoff);
 
-    if (driverLocation) {
-      points.push([driverLocation.lat, driverLocation.lng]);
-    }
-    points.push([pickup.lat, pickup.lng]);
-    points.push([dropoff.lat, dropoff.lng]);
+    fetchRoute(routePoints).then((latlngs) => {
+      if (!mapRef.current) return;
 
-    if (routeLineRef.current) {
-      routeLineRef.current.setLatLngs(points);
-    } else {
-      routeLineRef.current = L.polyline(points, {
-        color: "#3b82f6",
-        weight: 3,
-        opacity: 0.7,
-        dashArray: "10, 10",
-      }).addTo(mapRef.current);
-    }
+      if (routeLineRef.current) {
+        routeLineRef.current.setLatLngs(latlngs);
+      } else {
+        routeLineRef.current = L.polyline(latlngs, {
+          color: "#3b82f6",
+          weight: 4,
+          opacity: 0.8,
+        }).addTo(mapRef.current);
+      }
 
-    // Fit bounds to show all markers
-    const bounds = L.latLngBounds(points);
-    mapRef.current.fitBounds(bounds, { padding: [50, 50] });
+      const bounds = L.latLngBounds([
+        [pickup.lat, pickup.lng],
+        [dropoff.lat, dropoff.lng],
+        ...(driverLocation ? [[driverLocation.lat, driverLocation.lng] as [number, number]] : []),
+      ]);
+      mapRef.current.fitBounds(bounds, { padding: [50, 50] });
+    });
   }, [pickup, dropoff, driverLocation]);
+
+  // Go to current location
+  const handleLocateMe = useCallback(() => {
+    if (!navigator.geolocation) return;
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocating(false);
+        mapRef.current?.setView([pos.coords.latitude, pos.coords.longitude], 15);
+      },
+      () => setLocating(false),
+      { timeout: 8000 }
+    );
+  }, []);
 
   return (
     <div className="relative h-full w-full">
-      <div id="admin-ride-map" className="h-full w-full rounded-lg" />
+      {/* Map container — using ref instead of id to avoid conflicts */}
+      <div ref={containerRef} className="h-full w-full rounded-lg" />
 
-      {editable && (
-        <div className="absolute top-4 right-4 z-[1000] space-y-2">
-          <button
-            onClick={() => setSelectingType("pickup")}
-            className={`block w-full px-4 py-2 rounded-lg font-semibold shadow-lg ${
-              selectingType === "pickup"
-                ? "bg-green-600 text-white"
-                : "bg-white text-green-600 hover:bg-green-50"
-            }`}
-          >
-            📍 Set Pickup
-          </button>
-          <button
-            onClick={() => setSelectingType("dropoff")}
-            className={`block w-full px-4 py-2 rounded-lg font-semibold shadow-lg ${
-              selectingType === "dropoff"
-                ? "bg-red-600 text-white"
-                : "bg-white text-red-600 hover:bg-red-50"
-            }`}
-          >
-            🎯 Set Dropoff
-          </button>
+      {/* Mode indicator banner */}
+      {selectingType && (
+        <div className="absolute top-0 left-0 right-0 z-[1001] bg-blue-600 text-white text-center py-2 text-sm font-semibold rounded-t-lg pointer-events-none">
+          {selectingType === "pickup" ? "📍" : "🎯"} انقر على الخريطة لتحديد موقع{" "}
+          {selectingType === "pickup" ? "الانطلاق" : "الوصول"}
+          {" "}— أو اسحب العلامة
         </div>
       )}
 
-      {selectingType && (
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-[1000] bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg">
-          Click on the map to set {selectingType} location
+      {editable && (
+        <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
+          <button
+            onClick={() => updateSelectingType(selectingType === "pickup" ? null : "pickup")}
+            className={`px-4 py-2 rounded-lg font-semibold shadow-lg text-sm transition-colors ${selectingType === "pickup"
+                ? "bg-green-600 text-white ring-2 ring-green-300"
+                : "bg-white text-green-700 hover:bg-green-50 border border-green-200"
+              }`}
+          >
+            📍 تحديد الانطلاق
+          </button>
+          <button
+            onClick={() => updateSelectingType(selectingType === "dropoff" ? null : "dropoff")}
+            className={`px-4 py-2 rounded-lg font-semibold shadow-lg text-sm transition-colors ${selectingType === "dropoff"
+                ? "bg-red-600 text-white ring-2 ring-red-300"
+                : "bg-white text-red-700 hover:bg-red-50 border border-red-200"
+              }`}
+          >
+            🎯 تحديد الوصول
+          </button>
+          <button
+            onClick={handleLocateMe}
+            disabled={locating}
+            className="px-4 py-2 rounded-lg font-semibold shadow-lg text-sm bg-white text-blue-700 hover:bg-blue-50 border border-blue-200 disabled:opacity-60 transition-colors"
+          >
+            {locating ? "⏳ جاري التحديد..." : "📡 موقعي الحالي"}
+          </button>
         </div>
       )}
     </div>

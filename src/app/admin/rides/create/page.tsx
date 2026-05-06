@@ -33,15 +33,16 @@ export default function CreateRidePage() {
   // Form state
   const [clientId, setClientId] = useState("");
   const [driverId, setDriverId] = useState("");
-  const [pickupLat, setPickupLat] = useState(24.7136);
-  const [pickupLng, setPickupLng] = useState(46.6753);
+  // Damascus center as default
+  const [pickupLat, setPickupLat] = useState(33.5138);
+  const [pickupLng, setPickupLng] = useState(36.2765);
   const [pickupAddress, setPickupAddress] = useState("");
-  const [dropoffLat, setDropoffLat] = useState(24.7736);
-  const [dropoffLng, setDropoffLng] = useState(46.7353);
+  const [dropoffLat, setDropoffLat] = useState(33.5238);
+  const [dropoffLng, setDropoffLng] = useState(36.2865);
   const [dropoffAddress, setDropoffAddress] = useState("");
   const [rideType, setRideType] = useState("STANDARD");
   const [notes, setNotes] = useState("");
-
+  console.log("drivers", drivers)
   useEffect(() => {
     fetchUsers();
     fetchDrivers();

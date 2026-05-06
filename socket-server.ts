@@ -1,7 +1,7 @@
 // Standalone Socket.IO Server - Clean Architecture
+import { prisma } from "@/lib/prisma";
 import { createServer } from "http";
 import { Server } from "socket.io";
-import { prisma } from "../prisma";
 
 const PORT = process.env.SOCKET_PORT || 3001;
 
@@ -131,7 +131,7 @@ io.on("connection", (socket) => {
         where: { userId: id },
         data: { latitude: lat, longitude: lng },
       })
-      .catch(() => {});
+      .catch(() => { });
 
     io.to(`ride:${rideId}`).emit("ride:location", {
       driverId: id,

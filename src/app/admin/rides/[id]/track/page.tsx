@@ -11,7 +11,7 @@ const AdminRideMap = dynamic(() => import("@/components/AdminRideMap"), {
 });
 
 interface Ride {
-  id: string;
+  id: string | number;
   status: string;
   type: string;
   fare: number | null;
@@ -57,6 +57,7 @@ export default function TrackRidePage() {
 
   useEffect(() => {
     const userStr = localStorage.getItem("user");
+    console.log("userStr", userStr)
     if (userStr) {
       const user = JSON.parse(userStr);
       setAdminUserId(user.id.toString());
@@ -74,13 +75,17 @@ export default function TrackRidePage() {
     fetchRide();
   }, []);
 
-  // Join ride room and listen for updates
+  // Join ride room when socket connects and ride is loaded
   useEffect(() => {
     if (!socket || !ride) return;
 
-    // Join ride room
     socket.emit("ride:join", { rideId: ride.id });
     console.log(`📍 Admin joined ride room: ${ride.id}`);
+  }, [socket, ride?.id]);
+
+  // Listen for real-time updates
+  useEffect(() => {
+    if (!socket) return;
 
     // Listen for driver location updates
     const handleLocation = (data: any) => {
@@ -112,7 +117,7 @@ export default function TrackRidePage() {
       socket.off("ride:completed", handleStatusUpdate);
       socket.off("ride:cancelled", handleStatusUpdate);
     };
-  }, [socket, ride]);
+  }, [socket]);
 
   const fetchRide = async () => {
     try {
@@ -172,7 +177,7 @@ export default function TrackRidePage() {
           </Link>
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
-              Track Ride #{ride.id.slice(0, 8)}
+              Track Ride #{ride.id.toString().slice(0, 8)}
             </h1>
             <p className="text-gray-600 mt-1">Real-time ride tracking</p>
           </div>

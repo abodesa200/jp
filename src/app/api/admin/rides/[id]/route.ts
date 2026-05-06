@@ -11,7 +11,12 @@ export async function GET(
   if (!payload) return unauthorized();
   if (payload.role !== "ADMIN") return forbidden();
 
-  const { id } = await params;
+  // const { id } = await params;
+  const id = Number((await params).id);
+
+  if (isNaN(id)) {
+    return Response.json({ error: "Invalid ID" }, { status: 400 });
+  }
 
   try {
     const ride = await prisma.ride.findUnique({
@@ -82,7 +87,13 @@ export async function DELETE(
   if (!payload) return unauthorized();
   if (payload.role !== "ADMIN") return forbidden();
 
-  const { id } = await params;
+  // const { id } = await params;
+  const id = Number((await params).id);
+
+  if (isNaN(id)) {
+    return Response.json({ error: "Invalid ID" }, { status: 400 });
+  }
+
 
   try {
     await prisma.ride.delete({ where: { id } });
