@@ -23,18 +23,6 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.100.9
         version: 5.100.9(react@19.2.4)
-      '@ts-rest/core':
-        specifier: ^3.52.1
-        version: 3.52.1(@types/node@20.19.39)(zod@4.4.2)
-      '@ts-rest/next':
-        specifier: ^3.52.1
-        version: 3.52.1(@ts-rest/core@3.52.1(@types/node@20.19.39)(zod@4.4.2))(next@16.2.3(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(zod@4.4.2)
-      '@ts-rest/open-api':
-        specifier: ^3.52.1
-        version: 3.52.1(@ts-rest/core@3.52.1(@types/node@20.19.39)(zod@4.4.2))(zod@4.4.2)
-      '@ts-rest/react-query':
-        specifier: ^3.52.1
-        version: 3.52.1(@tanstack/react-query@5.100.9(react@19.2.4))(@ts-rest/core@3.52.1(@types/node@20.19.39)(zod@4.4.2))(react@19.2.4)(zod@4.4.2)
       '@types/pg':
         specifier: ^8.20.0
         version: 8.20.0
@@ -104,6 +92,9 @@ importers:
       tw-animate-css:
         specifier: ^1.4.0
         version: 1.4.0
+      yaml:
+        specifier: ^2.8.4
+        version: 2.8.4
       zod:
         specifier: ^4.4.2
         version: 4.4.2
@@ -165,12 +156,6 @@ packages:
   '@alloc/quick-lru@5.2.0':
     resolution: {integrity: sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==}
     engines: {node: '>=10'}
-
-  '@anatine/zod-openapi@1.14.2':
-    resolution: {integrity: sha512-q0qHfnuNYVKu0Swrnnvfj9971AEyW7c8v9jCOZGCl5ZbyGMNG4RPyJkRcMi/JC8CRfdOe0IDfNm1nNsi2avprg==}
-    peerDependencies:
-      openapi3-ts: ^2.0.0 || ^3.0.0
-      zod: ^3.20.0
 
   '@asteasolutions/zod-to-openapi@8.5.0':
     resolution: {integrity: sha512-SABbKiObg5dLRiTFnqiW1WWwGcg1BJfmHtT2asIBnBHg6Smy/Ms2KHc650+JI4Hw7lSkdiNebEGXpwoxfben8Q==}
@@ -1784,44 +1769,6 @@ packages:
 
   '@ts-morph/common@0.27.0':
     resolution: {integrity: sha512-Wf29UqxWDpc+i61k3oIOzcUfQt79PIT9y/MWfAGlrkjg6lBC1hwDECLXPVJAhWjiGbfBCxZd65F/LIZF3+jeJQ==}
-
-  '@ts-rest/core@3.52.1':
-    resolution: {integrity: sha512-tAjz7Kxq/grJodcTA1Anop4AVRDlD40fkksEV5Mmal88VoZeRKAG8oMHsDwdwPZz+B/zgnz0q2sF+cm5M7Bc7g==}
-    peerDependencies:
-      '@types/node': ^18.18.7 || >=20.8.4
-      zod: ^3.22.3
-    peerDependenciesMeta:
-      '@types/node':
-        optional: true
-      zod:
-        optional: true
-
-  '@ts-rest/next@3.52.1':
-    resolution: {integrity: sha512-LjxBlDlJDIdZafVucAfc/gJnYP3PATGLVN5nxFfSIJBRvLrlJeKK6oXxHB7biTUle/1xgyOZGTjh+i2S+0sJtA==}
-    peerDependencies:
-      '@ts-rest/core': ~3.52.0
-      next: ^12.0.0 || ^13.0.0 || ^14.0.0
-      zod: ^3.22.3
-    peerDependenciesMeta:
-      zod:
-        optional: true
-
-  '@ts-rest/open-api@3.52.1':
-    resolution: {integrity: sha512-VY91g6HFzCe1/fNgX4Y3HzaJbIdztCGHTg34drkh7bKgtNOizLJLXV0wwIkMwLGvjhRHojJxnwYxHjGMIkScwg==}
-    peerDependencies:
-      '@ts-rest/core': ~3.52.0
-      zod: ^3.22.3
-
-  '@ts-rest/react-query@3.52.1':
-    resolution: {integrity: sha512-Y4wx3oQwyEj7h3hVz2Wsrd8u7xWRqXc0K6YpKruZJg5G1pioKdlqqjKvv+JJbtgk+vImzha9z+NgeFnO4oYAkA==}
-    peerDependencies:
-      '@tanstack/react-query': ^4.0.0 || ^5.0.0
-      '@ts-rest/core': ~3.52.0
-      react: ^16.8.0 || ^17.0.0 || ^18.0.0
-      zod: ^3.22.3
-    peerDependenciesMeta:
-      zod:
-        optional: true
 
   '@tsconfig/node10@1.0.12':
     resolution: {integrity: sha512-UCYBaeFvM11aU2y3YPZ//O5Rhj+xKyzy7mvcIoAjASbigy8mHMryP5cK7dgjlz2hWxh1g5pLw084E0a/wlUSFQ==}
@@ -3700,9 +3647,6 @@ packages:
     resolution: {integrity: sha512-smsWv2LzFjP03xmvFoJ331ss6h+jixfA4UUV/Bsiyuu4YJPfN+FIQGOIiv4w9/+MoHkfkJ22UIaQWRVFRfH6Vw==}
     engines: {node: '>=20'}
 
-  openapi3-ts@2.0.2:
-    resolution: {integrity: sha512-TxhYBMoqx9frXyOgnRHufjQfPXomTIHYKhSKJ6jHfj13kS8OEIhvmE8CTuQyKtjjWttAjX5DPxM1vmalEpo8Qw==}
-
   openapi3-ts@4.5.0:
     resolution: {integrity: sha512-jaL+HgTq2Gj5jRcfdutgRGLosCy/hT8sQf6VOy+P+g36cZOjI1iukdPnijC+4CmeRzg/jEllJUboEic2FhxhtQ==}
 
@@ -4384,10 +4328,6 @@ packages:
     peerDependencies:
       typescript: '>=4.8.4'
 
-  ts-deepmerge@6.2.1:
-    resolution: {integrity: sha512-8CYSLazCyj0DJDpPIxOFzJG46r93uh6EynYjuey+bxcLltBeqZL7DMfaE5ZPzZNFlav7wx+2TDa/mBl8gkTYzw==}
-    engines: {node: '>=14.13.1'}
-
   ts-morph@26.0.0:
     resolution: {integrity: sha512-ztMO++owQnz8c/gIENcM9XfCEzgoGphTv+nKpYNM1bgsdOVC/jRZuEBf6N+mLLDNg68Kl+GgUZfOySaRiG1/Ug==}
 
@@ -4620,10 +4560,6 @@ packages:
   yallist@3.1.1:
     resolution: {integrity: sha512-a4UGQaWPH59mOXUYnAG2ewncQS4i4F43Tv3JoAM+s2VDAmS9NsK8GpDMLrCHPksFT7h3K6TOoUNn2pb7RoXx4g==}
 
-  yaml@1.10.3:
-    resolution: {integrity: sha512-vIYeF1u3CjlhAFekPPAk2h/Kv4T3mAkMox5OymRiJQB0spDP10LHvt+K7G9Ny6NuuMAb25/6n1qyUjAcGNf/AA==}
-    engines: {node: '>= 6'}
-
   yaml@2.8.4:
     resolution: {integrity: sha512-ml/JPOj9fOQK8RNnWojA67GbZ0ApXAUlN2UQclwv2eVgTgn7O9gg9o7paZWKMp4g0H3nTLtS9LVzhkpOFIKzog==}
     engines: {node: '>= 14.6'}
@@ -4682,12 +4618,6 @@ packages:
 snapshots:
 
   '@alloc/quick-lru@5.2.0': {}
-
-  '@anatine/zod-openapi@1.14.2(openapi3-ts@2.0.2)(zod@4.4.2)':
-    dependencies:
-      openapi3-ts: 2.0.2
-      ts-deepmerge: 6.2.1
-      zod: 4.4.2
 
   '@asteasolutions/zod-to-openapi@8.5.0(zod@4.4.2)':
     dependencies:
@@ -6309,33 +6239,6 @@ snapshots:
       fast-glob: 3.3.3
       minimatch: 10.2.5
       path-browserify: 1.0.1
-
-  '@ts-rest/core@3.52.1(@types/node@20.19.39)(zod@4.4.2)':
-    optionalDependencies:
-      '@types/node': 20.19.39
-      zod: 4.4.2
-
-  '@ts-rest/next@3.52.1(@ts-rest/core@3.52.1(@types/node@20.19.39)(zod@4.4.2))(next@16.2.3(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(zod@4.4.2)':
-    dependencies:
-      '@ts-rest/core': 3.52.1(@types/node@20.19.39)(zod@4.4.2)
-      next: 16.2.3(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-    optionalDependencies:
-      zod: 4.4.2
-
-  '@ts-rest/open-api@3.52.1(@ts-rest/core@3.52.1(@types/node@20.19.39)(zod@4.4.2))(zod@4.4.2)':
-    dependencies:
-      '@anatine/zod-openapi': 1.14.2(openapi3-ts@2.0.2)(zod@4.4.2)
-      '@ts-rest/core': 3.52.1(@types/node@20.19.39)(zod@4.4.2)
-      openapi3-ts: 2.0.2
-      zod: 4.4.2
-
-  '@ts-rest/react-query@3.52.1(@tanstack/react-query@5.100.9(react@19.2.4))(@ts-rest/core@3.52.1(@types/node@20.19.39)(zod@4.4.2))(react@19.2.4)(zod@4.4.2)':
-    dependencies:
-      '@tanstack/react-query': 5.100.9(react@19.2.4)
-      '@ts-rest/core': 3.52.1(@types/node@20.19.39)(zod@4.4.2)
-      react: 19.2.4
-    optionalDependencies:
-      zod: 4.4.2
 
   '@tsconfig/node10@1.0.12': {}
 
@@ -8348,10 +8251,6 @@ snapshots:
       powershell-utils: 0.1.0
       wsl-utils: 0.3.1
 
-  openapi3-ts@2.0.2:
-    dependencies:
-      yaml: 1.10.3
-
   openapi3-ts@4.5.0:
     dependencies:
       yaml: 2.8.4
@@ -9197,8 +9096,6 @@ snapshots:
     dependencies:
       typescript: 5.9.3
 
-  ts-deepmerge@6.2.1: {}
-
   ts-morph@26.0.0:
     dependencies:
       '@ts-morph/common': 0.27.0
@@ -9465,8 +9362,6 @@ snapshots:
   y18n@5.0.8: {}
 
   yallist@3.1.1: {}
-
-  yaml@1.10.3: {}
 
   yaml@2.8.4: {}
 

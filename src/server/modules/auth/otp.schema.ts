@@ -19,7 +19,7 @@ export const sendOtpSchema = z.object({
         description: "User type: client (regular user) or driver (must exist and be approved)",
         example: "client",
     }),
-}).openapi('SendOtpRequest');
+});
 
 // ─────────────────────────────────────────────
 // Verify OTP Schema

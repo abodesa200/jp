@@ -29,7 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts",
-    "sync-postman.ts", "swagger.config.ts"
   ],
   "exclude": ["node_modules"]
 }
