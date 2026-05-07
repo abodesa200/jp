@@ -1,7 +1,10 @@
-import { handleApiError } from "@/core/http/error-handler";
-import { unauthorized, verifyToken } from "@/services/auth/auth";
-import { updateSettingsSchema } from "@/services/settings/settings.schema";
-import { getSettingsService, updateSettingsService } from "@/services/settings/settings.service";
+import { handleApiError } from "@/server/core/http/error-handler";
+import { verifyToken } from "@/server/lib/auth/auth";
+import {
+    getSettingsService,
+    updateSettingsSchema,
+    updateSettingsService,
+} from "@/server/modules/profile/settings";
 import { NextRequest } from "next/server";
 
 // ─────────────────────────────────────────────
@@ -9,10 +12,9 @@ import { NextRequest } from "next/server";
 // ─────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
-    const payload = await verifyToken(req);
-    if (!payload) return unauthorized();
-
     try {
+        const payload = await verifyToken(req);
+
         const result = await getSettingsService(payload);
 
         return Response.json({
@@ -29,10 +31,9 @@ export async function GET(req: NextRequest) {
 // ─────────────────────────────────────────────
 
 export async function PATCH(req: NextRequest) {
-    const payload = await verifyToken(req);
-    if (!payload) return unauthorized();
-
     try {
+        const payload = await verifyToken(req);
+
         const body = await req.json();
         const data = updateSettingsSchema.parse(body);
 

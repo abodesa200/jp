@@ -1,36 +1,65 @@
-import { handleApiError } from "@/core/http/error-handler";
-import { unauthorized, verifyToken } from "@/services/auth/auth";
-import { deleteNotificationService } from "@/services/notification/notification.service";
-import { NextRequest } from "next/server";
+import { handleApiError } from "@/server/core/http/error-handler";
+import { verifyToken } from "@/server/lib/auth/auth";
+import {
+    deleteNotificationService,
+    markNotificationAsReadService,
+} from "@/server/modules/notifications";
+import { NextRequest, NextResponse } from "next/server";
 
 // ─────────────────────────────────────────────
-// DELETE /api/notifications/[id] - Delete notification
+// PATCH /api/notifications/:id (Mark as Read)
+// ─────────────────────────────────────────────
+
+export async function PATCH(
+    req: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const payload = await verifyToken(req);
+        const { id } = await params;
+        const notificationId = parseInt(id, 10);
+
+        if (isNaN(notificationId)) {
+            return NextResponse.json(
+                { error: "Invalid notification ID" },
+                { status: 400 }
+            );
+        }
+
+        const result = await markNotificationAsReadService(
+            payload,
+            notificationId
+        );
+
+        return NextResponse.json(result);
+    } catch (error) {
+        return handleApiError(error);
+    }
+}
+
+// ─────────────────────────────────────────────
+// DELETE /api/notifications/:id
 // ─────────────────────────────────────────────
 
 export async function DELETE(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    const payload = await verifyToken(req);
-    if (!payload) return unauthorized();
-
     try {
+        const payload = await verifyToken(req);
         const { id } = await params;
-        const notificationId = parseInt(id);
+        const notificationId = parseInt(id, 10);
 
         if (isNaN(notificationId)) {
-            return Response.json(
-                { success: false, error: "Invalid notification ID" },
+            return NextResponse.json(
+                { error: "Invalid notification ID" },
                 { status: 400 }
             );
         }
 
         const result = await deleteNotificationService(payload, notificationId);
 
-        return Response.json({
-            success: true,
-            data: result,
-        });
+        return NextResponse.json(result);
     } catch (error) {
         return handleApiError(error);
     }

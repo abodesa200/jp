@@ -1,97 +1,99 @@
-import { prisma } from "@/lib/prisma";
-import { forbidden, unauthorized, verifyToken } from "@/services/auth/auth";
-import { NextRequest } from "next/server";
+import { handleApiError } from "@/server/core/http/http-errors";
+import { authenticate } from "@/server/lib/auth/auth";
+import {
+    deleteUserService,
+    getUserByIdService,
+    updateUserSchema,
+    updateUserService,
+} from "@/server/modules/admin";
+import { NextRequest, NextResponse } from "next/server";
 
+// ─────────────────────────────────────────────
 // GET /api/admin/users/:id
-export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-    const payload = await verifyToken(req);
-    if (!payload) return unauthorized();
-    if (payload.role !== "ADMIN") return forbidden();
+// Get user by ID
+// ─────────────────────────────────────────────
 
-    const { id } = await params;
-    const userId = parseInt(id);
+export async function GET(
+    req: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const payload = await authenticate(req);
+        const { id } = await params;
+        const userId = parseInt(id, 10);
 
-    const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: {
-            id: true,
-            phone: true,
-            role: true,
-            name: true,
-            email: true,
-            avatarUrl: true,
-            isVerified: true,
-            createdAt: true,
-            updatedAt: true,
-            driver: {
-                select: {
-                    id: true,
-                    licenseNumber: true,
-                    carModel: true,
-                    carPlate: true,
-                    carColor: true,
-                    carYear: true,
-                    isApproved: true,
-                    isOnline: true,
-                    rating: true,
-                    totalRides: true,
-                },
-            },
-        },
-    });
+        if (isNaN(userId)) {
+            return NextResponse.json(
+                { error: "Invalid user ID" },
+                { status: 400 }
+            );
+        }
 
-    if (!user) return Response.json({ error: "User not found" }, { status: 404 });
+        const result = await getUserByIdService(payload, userId);
 
-    return Response.json({ user });
+        return NextResponse.json(result);
+    } catch (error) {
+        return handleApiError(error);
+    }
 }
 
-// PATCH /api/admin/users/:id — تعديل أي حقل
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-    const payload = await verifyToken(req);
-    if (!payload) return unauthorized();
-    if (payload.role !== "ADMIN") return forbidden();
+// ─────────────────────────────────────────────
+// PATCH /api/admin/users/:id
+// Update user
+// ─────────────────────────────────────────────
 
-    const { id } = await params;
-    const userId = parseInt(id);
-    const body = await req.json();
+export async function PATCH(
+    req: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const payload = await authenticate(req);
+        const { id } = await params;
+        const userId = parseInt(id, 10);
 
-    const { name, email, avatarUrl, role, isVerified, isApproved } = body;
+        if (isNaN(userId)) {
+            return NextResponse.json(
+                { error: "Invalid user ID" },
+                { status: 400 }
+            );
+        }
 
-    const user = await prisma.user.update({
-    where: { id: userId },
-    data: {
-        ...(name !== undefined && { name }),
-        ...(email !== undefined && { email }),
-        ...(avatarUrl !== undefined && { avatarUrl }),
-        ...(role !== undefined && { role }),
-        ...(isVerified !== undefined && { isVerified }),
+        const body = await req.json();
+        const data = updateUserSchema.parse(body);
 
-        ...(isApproved !== undefined && {
-            driver: {
-                update: {
-                    isApproved: Boolean(isApproved),
-                },
-            },
-        }),
-    },
-    include: {
-        driver: true,
-    },
-});
+        const result = await updateUserService(payload, userId, data);
 
-    return Response.json({ user });
+        return NextResponse.json(result);
+    } catch (error) {
+        return handleApiError(error);
+    }
 }
 
+// ─────────────────────────────────────────────
 // DELETE /api/admin/users/:id
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-    const payload = await verifyToken(req);
-    if (!payload) return unauthorized();
-    if (payload.role !== "ADMIN") return forbidden();
+// Delete user
+// ─────────────────────────────────────────────
 
-    const { id } = await params;
-    const userId = parseInt(id);
+export async function DELETE(
+    req: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const payload = await authenticate(req);
+        const { id } = await params;
+        const userId = parseInt(id, 10);
 
-    await prisma.user.delete({ where: { id: userId } });
+        if (isNaN(userId)) {
+            return NextResponse.json(
+                { error: "Invalid user ID" },
+                { status: 400 }
+            );
+        }
 
-    return Response.json({ success: true });
+        const result = await deleteUserService(payload, userId);
+
+        return NextResponse.json(result);
+    } catch (error) {
+        return handleApiError(error);
+    }
 }

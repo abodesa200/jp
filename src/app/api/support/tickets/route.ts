@@ -1,60 +1,53 @@
-import { handleApiError } from "@/core/http/error-handler";
-import { unauthorized, verifyToken } from "@/services/auth/auth";
+
+import { handleApiError } from "@/server/core/http/error-handler";
+import { verifyToken } from "@/server/lib/auth/auth";
 import {
     createSupportTicketSchema,
-    getSupportTicketsQuerySchema,
-} from "@/services/support/support.schema";
-import {
     createSupportTicketService,
-    getMySupportTicketsService,
-} from "@/services/support/support.service";
-import { NextRequest } from "next/server";
+    getSupportTicketsQuerySchema,
+    getUserTicketsService,
+} from "@/server/modules/support";
+import { NextRequest, NextResponse } from "next/server";
 
 // ─────────────────────────────────────────────
-// GET /api/support/tickets - Get my tickets
+// POST /api/support/tickets
+// Create a new support ticket
 // ─────────────────────────────────────────────
 
-export async function GET(req: NextRequest) {
-    const payload = await verifyToken(req);
-    if (!payload) return unauthorized();
-
+export async function POST(req: NextRequest) {
     try {
-        const { searchParams } = new URL(req.url);
-        const query = getSupportTicketsQuerySchema.parse({
-            isResolved: searchParams.get("isResolved") || undefined,
-            page: searchParams.get("page") || undefined,
-            limit: searchParams.get("limit") || undefined,
-        });
+        const payload = await verifyToken(req);
 
-        const result = await getMySupportTicketsService(payload, query);
+        const body = await req.json();
+        const data = createSupportTicketSchema.parse(body);
 
-        return Response.json({
-            success: true,
-            data: result,
-        });
+        const result = await createSupportTicketService(payload, data);
+
+        return NextResponse.json(result, { status: 201 });
     } catch (error) {
         return handleApiError(error);
     }
 }
 
 // ─────────────────────────────────────────────
-// POST /api/support/tickets - Create ticket
+// GET /api/support/tickets
+// Get user's own tickets
 // ─────────────────────────────────────────────
 
-export async function POST(req: NextRequest) {
-    const payload = await verifyToken(req);
-    if (!payload) return unauthorized();
-
+export async function GET(req: NextRequest) {
     try {
-        const body = await req.json();
-        const data = createSupportTicketSchema.parse(body);
+        const payload = await verifyToken(req);
 
-        const result = await createSupportTicketService(payload, data);
+        const { searchParams } = new URL(req.url);
+        const query = getSupportTicketsQuerySchema.parse({
+            status: searchParams.get("status") || "all",
+            page: searchParams.get("page") || "1",
+            limit: searchParams.get("limit") || "20",
+        });
 
-        return Response.json({
-            success: true,
-            data: result,
-        }, { status: 201 });
+        const result = await getUserTicketsService(payload, query);
+
+        return NextResponse.json(result);
     } catch (error) {
         return handleApiError(error);
     }

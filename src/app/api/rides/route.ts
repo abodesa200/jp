@@ -1,8 +1,11 @@
-import { handleApiError } from "@/core/http/error-handler";
-import { unauthorized, verifyToken } from "@/services/auth/auth";
-import { createRideService } from "@/services/rides/ride-create.service";
-import { getUserRidesService } from "@/services/rides/ride-query.service";
-import { createRideSchema, getRidesQuerySchema } from "@/services/rides/ride.schema";
+import { handleApiError } from "@/server/core/http/error-handler";
+import { verifyToken } from "@/server/lib/auth/auth";
+import {
+  createRideSchema,
+  createRideService,
+  getRidesQuerySchema,
+  getUserRidesService,
+} from "@/server/modules/rides";
 import { NextRequest } from "next/server";
 
 // ─────────────────────────────────────────────

@@ -1,5 +1,5 @@
-import { handleApiError } from "@/core/http/error-handler";
-import { unauthorized, verifyToken } from "@/services/auth/auth";
+import { handleApiError } from "@/server/core/http/error-handler";
+import {  verifyToken } from "@/server/lib/auth/auth";
 import { applyPromoSchema } from "@/services/promo/promo.schema";
 import { applyPromoService } from "@/services/promo/promo.service";
 import { NextRequest } from "next/server";
@@ -13,7 +13,6 @@ export async function POST(
     { params }: { params: Promise<{ id: string }> }
 ) {
     const payload = await verifyToken(req);
-    if (!payload) return unauthorized();
 
     try {
         const { id } = await params;

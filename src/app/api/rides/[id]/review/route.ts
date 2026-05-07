@@ -1,7 +1,10 @@
-import { handleApiError } from "@/core/http/error-handler";
-import { unauthorized, verifyToken } from "@/services/auth/auth";
-import { createReviewSchema } from "@/services/review/review.schema";
-import { createReviewService, getRideReviewService } from "@/services/review/review.service";
+import { handleApiError } from "@/server/core/http/error-handler";
+import { unauthorized, verifyToken } from "@/server/lib/auth/auth";
+import {
+    createReviewSchema,
+    createReviewService,
+    getRideReviewService,
+} from "@/server/modules/profile/reviews";
 import { NextRequest } from "next/server";
 
 // ─────────────────────────────────────────────
@@ -12,10 +15,10 @@ export async function POST(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    const payload = await verifyToken(req);
-    if (!payload) return unauthorized();
-
     try {
+        const payload = await verifyToken(req);
+        if (!payload) return unauthorized();
+
         const { id } = await params;
         const rideId = parseInt(id);
 
@@ -31,10 +34,13 @@ export async function POST(
 
         const result = await createReviewService(payload, rideId, data);
 
-        return Response.json({
-            success: true,
-            data: result,
-        }, { status: 201 });
+        return Response.json(
+            {
+                success: true,
+                data: result,
+            },
+            { status: 201 }
+        );
     } catch (error) {
         return handleApiError(error);
     }
@@ -48,10 +54,10 @@ export async function GET(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    const payload = await verifyToken(req);
-    if (!payload) return unauthorized();
-
     try {
+        const payload = await verifyToken(req);
+        if (!payload) return unauthorized();
+
         const { id } = await params;
         const rideId = parseInt(id);
 

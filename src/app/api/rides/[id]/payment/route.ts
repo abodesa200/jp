@@ -1,11 +1,12 @@
-import { handleApiError } from "@/core/http/error-handler";
-import { unauthorized, verifyToken } from "@/services/auth/auth";
-import { createPaymentSchema, updatePaymentSchema } from "@/services/payment/payment.schema";
+import { handleApiError } from "@/server/core/http/error-handler";
+import { unauthorized, verifyToken } from "@/server/lib/auth/auth";
 import {
+    createPaymentSchema,
     createPaymentService,
     getRidePaymentService,
+    updatePaymentSchema,
     updatePaymentService,
-} from "@/services/payment/payment.service";
+} from "@/server/modules/rides/payment";
 import { NextRequest } from "next/server";
 
 // ─────────────────────────────────────────────

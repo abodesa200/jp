@@ -1,7 +1,10 @@
-import { handleApiError } from "@/core/http/error-handler";
-import { unauthorized, verifyToken } from "@/services/auth/auth";
-import { getReviewsQuerySchema } from "@/services/review/review.schema";
-import { getMyReviewsService } from "@/services/review/review.service";
+import { handleApiError } from "@/server/core/http/error-handler";
+import { verifyToken } from "@/server/lib/auth/auth";
+import {
+    
+    getReviewsQuerySchema,
+} from "@/server/modules/profile/reviews";
+import { getMyReviewsService } from "@/server/modules/profile/reviews/reviews.service";
 import { NextRequest } from "next/server";
 
 // ─────────────────────────────────────────────
@@ -9,10 +12,9 @@ import { NextRequest } from "next/server";
 // ─────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
-    const payload = await verifyToken(req);
-    if (!payload) return unauthorized();
-
     try {
+        const payload = await verifyToken(req);
+
         const { searchParams } = new URL(req.url);
         const query = getReviewsQuerySchema.parse({
             page: searchParams.get("page") || undefined,

@@ -1,32 +1,40 @@
-import { handleApiError } from "@/core/http/error-handler";
-import { unauthorized, verifyToken } from "@/services/auth/auth";
-import { getNearbyDriversService } from "@/services/driver/driver-status.service";
-import { nearbyDriversQuerySchema } from "@/services/driver/driver.schema";
-import { NextRequest } from "next/server";
+import { handleApiError } from "@/server/core/http/error-handler";
+import {
+    getNearbyDriversSchema,
+    getNearbyDriversService,
+} from "@/server/modules/drivers";
+import { NextRequest, NextResponse } from "next/server";
 
 // ─────────────────────────────────────────────
-// GET /api/drivers/nearby - Get nearby drivers
+// GET /api/drivers/nearby
+// Get nearby drivers
+// Query params: latitude, longitude, radiusKm (optional)
 // ─────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
-    const payload = await verifyToken(req);
-    if (!payload) return unauthorized();
-
     try {
         const { searchParams } = new URL(req.url);
-        const query = nearbyDriversQuerySchema.parse({
-            lat: searchParams.get("lat"),
-            lng: searchParams.get("lng"),
-            radius: searchParams.get("radius") || undefined,
-            limit: searchParams.get("limit") || undefined,
+
+        const latitude = parseFloat(searchParams.get("latitude") || "");
+        const longitude = parseFloat(searchParams.get("longitude") || "");
+        const radiusKm = parseFloat(searchParams.get("radiusKm") || "5");
+
+        if (isNaN(latitude) || isNaN(longitude)) {
+            return NextResponse.json(
+                { error: "Invalid latitude or longitude" },
+                { status: 400 }
+            );
+        }
+
+        const validated = getNearbyDriversSchema.parse({
+            latitude,
+            longitude,
+            radiusKm,
         });
 
-        const result = await getNearbyDriversService(query);
+        const result = await getNearbyDriversService(validated);
 
-        return Response.json({
-            success: true,
-            data: result,
-        });
+        return NextResponse.json(result);
     } catch (error) {
         return handleApiError(error);
     }

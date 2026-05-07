@@ -1,129 +1,21 @@
-import { prisma } from "@/lib/prisma";
-import { forbidden, unauthorized, verifyToken } from "@/services/auth/auth";
-import { NextRequest } from "next/server";
+import { handleApiError } from "@/server/core/http/http-errors";
+import { authenticate } from "@/server/lib/auth/auth";
+import { getDashboardStatsService } from "@/server/modules/admin";
+import { NextRequest, NextResponse } from "next/server";
 
-// GET /api/admin/stats - إحصائيات الداشبورد
+// ─────────────────────────────────────────────
+// GET /api/admin/stats
+// Get dashboard statistics
+// ─────────────────────────────────────────────
+
 export async function GET(req: NextRequest) {
-  const payload = await verifyToken(req);
-  if (!payload) return unauthorized();
-  if (payload.role !== "ADMIN") return forbidden();
-
   try {
-    // إحصائيات عامة
-    const [
-      totalUsers,
-      totalDrivers,
-      totalRides,
-      activeRides,
-      completedRides,
-      cancelledRides,
-      pendingDrivers,
-      onlineDrivers,
-      totalRevenue,
-    ] = await Promise.all([
-      // إجمالي المستخدمين
-      prisma.user.count({ where: { role: "CLIENT" } }),
+    const payload = await authenticate(req);
 
-      // إجمالي السائقين
-      prisma.driver.count(),
+    const result = await getDashboardStatsService(payload);
 
-      // إجمالي الرحلات
-      prisma.ride.count(),
-
-      // الرحلات النشطة
-      prisma.ride.count({
-        where: {
-          status: { in: ["REQUESTED", "ACCEPTED", "IN_PROGRESS"] },
-        },
-      }),
-
-      // الرحلات المكتملة
-      prisma.ride.count({ where: { status: "COMPLETED" } }),
-
-      // الرحلات الملغاة
-      prisma.ride.count({ where: { status: "CANCELLED" } }),
-
-      // السائقين المعلقين
-      prisma.driver.count({ where: { isApproved: false } }),
-
-      // السائقين المتصلين
-      prisma.driver.count({ where: { isOnline: true, isApproved: true } }),
-
-      // إجمالي الإيرادات
-      prisma.ride.aggregate({
-        where: { status: "COMPLETED" },
-        _sum: { fare: true },
-      }),
-    ]);
-
-    // إحصائيات آخر 7 أيام
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-    const [recentRides, recentUsers, recentDrivers] = await Promise.all([
-      prisma.ride.count({
-        where: { createdAt: { gte: sevenDaysAgo } },
-      }),
-      prisma.user.count({
-        where: { createdAt: { gte: sevenDaysAgo }, role: "CLIENT" },
-      }),
-      prisma.driver.count({
-        where: { createdAt: { gte: sevenDaysAgo } },
-      }),
-    ]);
-
-    // أفضل السائقين (حسب التقييم)
-    const topDrivers = await prisma.driver.findMany({
-      where: { totalRides: { gt: 0 } },
-      orderBy: { rating: "desc" },
-      take: 5,
-      include: {
-        user: {
-          select: { id: true, name: true, phone: true, avatarUrl: true },
-        },
-      },
-    });
-
-    // آخر الرحلات
-    const recentRidesData = await prisma.ride.findMany({
-      take: 10,
-      orderBy: { createdAt: "desc" },
-      include: {
-        client: {
-          select: { id: true, name: true, phone: true },
-        },
-        driver: {
-          include: {
-            user: {
-              select: { id: true, name: true, phone: true },
-            },
-          },
-        },
-      },
-    });
-
-    return Response.json({
-      overview: {
-        totalUsers,
-        totalDrivers,
-        totalRides,
-        activeRides,
-        completedRides,
-        cancelledRides,
-        pendingDrivers,
-        onlineDrivers,
-        totalRevenue: totalRevenue._sum.fare || 0,
-      },
-      recent: {
-        rides: recentRides,
-        users: recentUsers,
-        drivers: recentDrivers,
-      },
-      topDrivers,
-      recentRides: recentRidesData,
-    });
+    return NextResponse.json(result);
   } catch (error) {
-    console.error("Error fetching stats:", error);
-    return Response.json({ error: "Internal server error" }, { status: 500 });
+    return handleApiError(error);
   }
 }

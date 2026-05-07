@@ -1,10 +1,10 @@
-import { handleApiError } from "@/core/http/error-handler";
-import { unauthorized, verifyToken } from "@/services/auth/auth";
+import { handleApiError } from "@/server/core/http/error-handler";
+import { verifyToken } from "@/server/lib/auth/auth";
+import { updateDriverProfileSchema } from "@/server/modules/profile/profile.schema";
 import {
     getDriverProfileService,
     updateDriverProfileService,
-} from "@/services/driver/driver-profile.service";
-import { updateDriverProfileSchema } from "@/services/driver/driver.schema";
+} from "@/server/modules/profile/profile.service";
 import { NextRequest } from "next/server";
 
 // ─────────────────────────────────────────────
@@ -12,10 +12,8 @@ import { NextRequest } from "next/server";
 // ─────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
-    const payload = await verifyToken(req);
-    if (!payload) return unauthorized();
-
     try {
+        const payload = await verifyToken(req);
         const result = await getDriverProfileService(payload);
 
         return Response.json({
@@ -32,10 +30,8 @@ export async function GET(req: NextRequest) {
 // ─────────────────────────────────────────────
 
 export async function PATCH(req: NextRequest) {
-    const payload = await verifyToken(req);
-    if (!payload) return unauthorized();
-
     try {
+        const payload = await verifyToken(req);
         const body = await req.json();
         const data = updateDriverProfileSchema.parse(body);
 

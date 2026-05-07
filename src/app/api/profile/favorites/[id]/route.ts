@@ -1,6 +1,6 @@
-import { handleApiError } from "@/core/http/error-handler";
-import { unauthorized, verifyToken } from "@/services/auth/auth";
-import { deleteFavoriteService } from "@/services/favorites/favorites.service";
+import { handleApiError } from "@/server/core/http/error-handler";
+import { verifyToken } from "@/server/lib/auth/auth";
+import { deleteFavoriteService } from "@/server/modules/profile/favorites";
 import { NextRequest } from "next/server";
 
 // ─────────────────────────────────────────────
@@ -11,10 +11,9 @@ export async function DELETE(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    const payload = await verifyToken(req);
-    if (!payload) return unauthorized();
-
     try {
+        const payload = await verifyToken(req);
+
         const { id } = await params;
         const favoriteId = parseInt(id);
 

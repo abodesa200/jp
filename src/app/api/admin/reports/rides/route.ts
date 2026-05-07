@@ -1,6 +1,9 @@
-import { handleApiError } from "@/core/http/error-handler";
-import { forbidden, unauthorized, verifyToken } from "@/services/auth/auth";
-import { getAdminRidesReportService, rideHistoryQuerySchema } from "@/services/rides/ride-history.service";
+import { handleApiError } from "@/server/core/http/error-handler";
+import {  verifyToken } from "@/server/lib/auth/auth";
+import {
+    getAdminRidesReportService,
+    rideHistoryQuerySchema,
+} from "@/server/modules/rides/history";
 import { NextRequest } from "next/server";
 
 // ─────────────────────────────────────────────
@@ -9,8 +12,7 @@ import { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest) {
     const payload = await verifyToken(req);
-    if (!payload) return unauthorized();
-    if (payload.role !== "ADMIN") return forbidden();
+ 
 
     try {
         const { searchParams } = new URL(req.url);

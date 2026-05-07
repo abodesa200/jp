@@ -1,5 +1,5 @@
-import { ForbiddenError, NotFoundError } from "@/core/http/http-errors";
 import { prisma } from "@/lib/prisma";
+import { ForbiddenError, NotFoundError } from "@/server/core/http/http-errors";
 import {
     CreateSupportTicketDTO,
     GetSupportTicketsQueryDTO,

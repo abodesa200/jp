@@ -1,7 +1,9 @@
-import { handleApiError } from "@/core/http/error-handler";
-import { unauthorized, verifyToken } from "@/services/auth/auth";
-import { getNearbyRidesService } from "@/services/rides/ride-query.service";
-import { getNearbyRidesQuerySchema } from "@/services/rides/ride.schema";
+import { handleApiError } from "@/server/core/http/error-handler";
+import {  verifyToken } from "@/server/lib/auth/auth";
+import {
+  getNearbyRidesQuerySchema,
+  getNearbyRidesService,
+} from "@/server/modules/rides";
 import { NextRequest } from "next/server";
 
 // ─────────────────────────────────────────────
@@ -10,7 +12,6 @@ import { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest) {
   const payload = await verifyToken(req);
-  if (!payload) return unauthorized();
 
   try {
     const { searchParams } = new URL(req.url);

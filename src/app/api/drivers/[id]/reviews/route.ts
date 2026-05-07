@@ -1,43 +1,44 @@
-import { handleApiError } from "@/core/http/error-handler";
-import { unauthorized, verifyToken } from "@/services/auth/auth";
-import { getReviewsQuerySchema } from "@/services/review/review.schema";
-import { getDriverReviewsService } from "@/services/review/review.service";
-import { NextRequest } from "next/server";
+import { handleApiError } from "@/server/core/http/error-handler";
+import {
+    getDriverReviewsSchema,
+    getDriverReviewsService,
+} from "@/server/modules/drivers";
+import { NextRequest, NextResponse } from "next/server";
 
 // ─────────────────────────────────────────────
-// GET /api/drivers/[id]/reviews - Get driver reviews
+// GET /api/drivers/:id/reviews
+// Get driver reviews
+// Query params: page, limit
 // ─────────────────────────────────────────────
 
 export async function GET(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    const payload = await verifyToken(req);
-    if (!payload) return unauthorized();
-
     try {
         const { id } = await params;
         const driverId = parseInt(id);
 
         if (isNaN(driverId)) {
-            return Response.json(
-                { success: false, error: "Invalid driver ID" },
+            return NextResponse.json(
+                { error: "Invalid driver ID" },
                 { status: 400 }
             );
         }
 
         const { searchParams } = new URL(req.url);
-        const query = getReviewsQuerySchema.parse({
-            page: searchParams.get("page") || undefined,
-            limit: searchParams.get("limit") || undefined,
+        const page = parseInt(searchParams.get("page") || "1");
+        const limit = parseInt(searchParams.get("limit") || "10");
+
+        const validated = getDriverReviewsSchema.parse({
+            driverId,
+            page,
+            limit,
         });
 
-        const result = await getDriverReviewsService(driverId, query);
+        const result = await getDriverReviewsService(validated);
 
-        return Response.json({
-            success: true,
-            data: result,
-        });
+        return NextResponse.json(result);
     } catch (error) {
         return handleApiError(error);
     }

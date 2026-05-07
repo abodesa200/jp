@@ -1,34 +1,47 @@
-
-import { unauthorized, verifyToken } from "@/services/auth/auth";
-import { getProfileService, updateProfileService } from "@/services/profile/profile.service";
+import { handleApiError } from "@/server/core/http/error-handler";
+import { verifyToken } from "@/server/lib/auth/auth";
+import { updateClientProfileSchema } from "@/server/modules/profile/profile.schema";
+import {
+    getClientProfileService,
+    updateClientProfileService,
+} from "@/server/modules/profile/profile.service";
 import { NextRequest } from "next/server";
 
+// ─────────────────────────────────────────────
+// GET /api/profile - Get client profile
+// ─────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
-    const payload = await verifyToken(req);
+    try {
+        const payload = await verifyToken(req);
+        const user = await getClientProfileService(payload);
 
-    if (!payload) {
-        return unauthorized();
+        return Response.json({
+            success: true,
+            user,
+        });
+    } catch (error) {
+        return handleApiError(error);
     }
-
-    const user = await getProfileService(payload);
-
-    if (!user) {
-        return Response.json(
-            { message: "User not found" },
-            { status: 404 }
-        );
-    }
-
-    return Response.json({ user });
 }
+
+// ─────────────────────────────────────────────
+// PATCH /api/profile - Update client profile
+// ─────────────────────────────────────────────
+
 export async function PATCH(req: NextRequest) {
-    const payload = await verifyToken(req);
-    if (!payload) return unauthorized();
+    try {
+        const payload = await verifyToken(req);
+        const body = await req.json();
+        const data = updateClientProfileSchema.parse(body);
 
-    const body = await req.json();
+        const result = await updateClientProfileService(payload, data);
 
-    const result = await updateProfileService(payload, body);
-
-    return Response.json(result);
+        return Response.json({
+            success: true,
+            data: result,
+        });
+    } catch (error) {
+        return handleApiError(error);
+    }
 }

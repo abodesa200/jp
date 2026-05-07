@@ -1,6 +1,9 @@
-import { handleApiError } from "@/core/http/error-handler";
-import { unauthorized, verifyToken } from "@/services/auth/auth";
-import { exportRideHistoryService, rideHistoryQuerySchema } from "@/services/rides/ride-history.service";
+import { handleApiError } from "@/server/core/http/error-handler";
+import {  verifyToken } from "@/server/lib/auth/auth";
+import {
+    exportRideHistoryService,
+    rideHistoryQuerySchema,
+} from "@/server/modules/rides/history";
 import { NextRequest } from "next/server";
 
 // ─────────────────────────────────────────────
@@ -9,7 +12,6 @@ import { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest) {
     const payload = await verifyToken(req);
-    if (!payload) return unauthorized();
 
     try {
         const { searchParams } = new URL(req.url);

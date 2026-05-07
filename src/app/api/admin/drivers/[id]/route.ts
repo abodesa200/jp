@@ -1,66 +1,60 @@
-import { handleApiError } from "@/core/http/error-handler";
-import { forbidden, unauthorized, verifyToken } from "@/services/auth/auth";
+
+import { handleApiError } from "@/server/core/http/error-handler";
+import { verifyToken } from "@/server/lib/auth/auth";
 import {
     deleteDriverService,
     getDriverByIdService,
+    updateDriverSchema,
     updateDriverService,
-} from "@/services/driver/driver-admin.service";
-import { updateDriverSchema } from "@/services/driver/driver.schema";
-import { NextRequest } from "next/server";
+} from "@/server/modules/admin";
+import { NextRequest, NextResponse } from "next/server";
 
 // ─────────────────────────────────────────────
-// GET /api/admin/drivers/[id] - Get driver details
+// GET /api/admin/drivers/:id
+// Get driver by ID
 // ─────────────────────────────────────────────
 
 export async function GET(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    const payload = await verifyToken(req);
-    if (!payload) return unauthorized();
-    if (payload.role !== "ADMIN") return forbidden();
-
     try {
+        const payload = await verifyToken(req);
         const { id } = await params;
-        const driverId = parseInt(id);
+        const driverId = parseInt(id, 10);
 
         if (isNaN(driverId)) {
-            return Response.json(
-                { success: false, error: "Invalid driver ID" },
+            return NextResponse.json(
+                { error: "Invalid driver ID" },
                 { status: 400 }
             );
         }
 
-        const result = await getDriverByIdService(driverId);
+        const result = await getDriverByIdService(payload, driverId);
 
-        return Response.json({
-            success: true,
-            data: result,
-        });
+        return NextResponse.json(result);
     } catch (error) {
         return handleApiError(error);
     }
 }
 
 // ─────────────────────────────────────────────
-// PATCH /api/admin/drivers/[id] - Update driver
+// PATCH /api/admin/drivers/:id
+// Update driver (approve/reject)
 // ─────────────────────────────────────────────
 
 export async function PATCH(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    const payload = await verifyToken(req);
-    if (!payload) return unauthorized();
-    if (payload.role !== "ADMIN") return forbidden();
-
     try {
+        const payload = await verifyToken(req);
         const { id } = await params;
-        const driverId = parseInt(id);
+        const driverId = parseInt(id, 10);
 
         if (isNaN(driverId)) {
-            return Response.json(
-                { success: false, error: "Invalid driver ID" },
+            return NextResponse.json(
+                { error: "Invalid driver ID" },
                 { status: 400 }
             );
         }
@@ -68,46 +62,38 @@ export async function PATCH(
         const body = await req.json();
         const data = updateDriverSchema.parse(body);
 
-        const result = await updateDriverService(driverId, data);
+        const result = await updateDriverService(payload, driverId, data);
 
-        return Response.json({
-            success: true,
-            data: result,
-        });
+        return NextResponse.json(result);
     } catch (error) {
         return handleApiError(error);
     }
 }
 
 // ─────────────────────────────────────────────
-// DELETE /api/admin/drivers/[id] - Delete driver
+// DELETE /api/admin/drivers/:id
+// Delete driver
 // ─────────────────────────────────────────────
 
 export async function DELETE(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    const payload = await verifyToken(req);
-    if (!payload) return unauthorized();
-    if (payload.role !== "ADMIN") return forbidden();
-
     try {
+        const payload = await verifyToken(req);
         const { id } = await params;
-        const driverId = parseInt(id);
+        const driverId = parseInt(id, 10);
 
         if (isNaN(driverId)) {
-            return Response.json(
-                { success: false, error: "Invalid driver ID" },
+            return NextResponse.json(
+                { error: "Invalid driver ID" },
                 { status: 400 }
             );
         }
 
-        const result = await deleteDriverService(driverId);
+        const result = await deleteDriverService(payload, driverId);
 
-        return Response.json({
-            success: true,
-            data: result,
-        });
+        return NextResponse.json(result);
     } catch (error) {
         return handleApiError(error);
     }

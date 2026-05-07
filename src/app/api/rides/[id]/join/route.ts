@@ -1,7 +1,9 @@
-import { handleApiError } from "@/core/http/error-handler";
-import { unauthorized, verifyToken } from "@/services/auth/auth";
-import { joinCarpoolingSchema } from "@/services/carpooling/carpooling.schema";
-import { joinCarpoolingService } from "@/services/carpooling/carpooling.service";
+import { handleApiError } from "@/server/core/http/error-handler";
+import { verifyToken } from "@/server/lib/auth/auth";
+import {
+    joinCarpoolingSchema,
+    joinCarpoolingService,
+} from "@/server/modules/rides/carpooling";
 import { NextRequest } from "next/server";
 
 // ─────────────────────────────────────────────
@@ -13,7 +15,6 @@ export async function POST(
     { params }: { params: Promise<{ id: string }> }
 ) {
     const payload = await verifyToken(req);
-    if (!payload) return unauthorized();
 
     try {
         const { id } = await params;

@@ -1,7 +1,9 @@
-import { handleApiError } from "@/core/http/error-handler";
-import { unauthorized, verifyToken } from "@/services/auth/auth";
-import { cancelRideService } from "@/services/rides/ride-status.service";
-import { cancelRideSchema } from "@/services/rides/ride.schema";
+import { handleApiError } from "@/server/core/http/error-handler";
+import { unauthorized, verifyToken } from "@/server/lib/auth/auth";
+import {
+  cancelRideSchema,
+  cancelRideService,
+} from "@/server/modules/rides/status";
 import { NextRequest } from "next/server";
 
 // ─────────────────────────────────────────────

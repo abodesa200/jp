@@ -1,5 +1,5 @@
-import { ConflictError, ForbiddenError, NotFoundError } from "@/core/http/http-errors";
 import { prisma } from "@/lib/prisma";
+import { ConflictError, ForbiddenError, NotFoundError } from "@/server/core/http/http-errors";
 import { ApplyPromoDTO, CreatePromoDTO, GetPromoCodesQueryDTO } from "./promo.schema";
 
 type Payload = {

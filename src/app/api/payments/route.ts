@@ -1,7 +1,9 @@
-import { handleApiError } from "@/core/http/error-handler";
-import { unauthorized, verifyToken } from "@/services/auth/auth";
-import { getPaymentsQuerySchema } from "@/services/payment/payment.schema";
-import { getMyPaymentsService } from "@/services/payment/payment.service";
+import { handleApiError } from "@/server/core/http/error-handler";
+import {  verifyToken } from "@/server/lib/auth/auth";
+import {
+    getMyPaymentsService,
+    getPaymentsQuerySchema,
+} from "@/server/modules/rides/payment";
 import { NextRequest } from "next/server";
 
 // ─────────────────────────────────────────────
@@ -10,7 +12,6 @@ import { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest) {
     const payload = await verifyToken(req);
-    if (!payload) return unauthorized();
 
     try {
         const { searchParams } = new URL(req.url);

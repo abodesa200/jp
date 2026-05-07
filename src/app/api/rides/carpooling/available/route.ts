@@ -1,7 +1,9 @@
-import { handleApiError } from "@/core/http/error-handler";
-import { unauthorized, verifyToken } from "@/services/auth/auth";
-import { availableCarpoolingQuerySchema } from "@/services/carpooling/carpooling.schema";
-import { getAvailableCarpoolingService } from "@/services/carpooling/carpooling.service";
+import { handleApiError } from "@/server/core/http/error-handler";
+import { verifyToken } from "@/server/lib/auth/auth";
+import {
+    availableCarpoolingQuerySchema,
+    getAvailableCarpoolingService,
+} from "@/server/modules/rides/carpooling";
 import { NextRequest } from "next/server";
 
 // ─────────────────────────────────────────────
@@ -10,7 +12,6 @@ import { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest) {
     const payload = await verifyToken(req);
-    if (!payload) return unauthorized();
 
     try {
         const { searchParams } = new URL(req.url);

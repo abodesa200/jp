@@ -1,65 +1,33 @@
-import { prisma } from "@/lib/prisma";
-import { forbidden, unauthorized, verifyToken } from "@/services/auth/auth";
-import { NextRequest } from "next/server";
 
-// GET /api/admin/rides?status=COMPLETED&page=1&limit=20
+import { handleApiError } from "@/server/core/http/error-handler";
+import { verifyToken } from "@/server/lib/auth/auth";
+import { getRidesQuerySchema, getRidesService } from "@/server/modules/admin";
+import { NextRequest, NextResponse } from "next/server";
+
+// ─────────────────────────────────────────────
+// GET /api/admin/rides
+// Get rides list
+// ─────────────────────────────────────────────
+
 export async function GET(req: NextRequest) {
-  const payload = await verifyToken(req);
-  if (!payload) return unauthorized();
-  if (payload.role !== "ADMIN") return forbidden();
-
-  const { searchParams } = new URL(req.url);
-  const status = searchParams.get("status") ?? undefined;
-  const page = Math.max(1, parseInt(searchParams.get("page") ?? "1"));
-  const limit = Math.min(100, parseInt(searchParams.get("limit") ?? "20"));
-  const skip = (page - 1) * limit;
-
-  const where = status ? { status: status as any } : {};
-
   try {
-    const [rides, total] = await Promise.all([
-      prisma.ride.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: "desc" },
-        include: {
-          client: {
-            select: {
-              id: true,
-              name: true,
-              phone: true,
-              avatarUrl: true,
-            },
-          },
-          driver: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  name: true,
-                  phone: true,
-                  avatarUrl: true,
-                },
-              },
-            },
-          },
-        },
-      }),
-      prisma.ride.count({ where }),
-    ]);
+    const payload = await verifyToken(req);
 
-    return Response.json({
-      rides,
-      pagination: {
-        total,
-        page,
-        limit,
-        pages: Math.ceil(total / limit),
-      },
+    const { searchParams } = new URL(req.url);
+    const query = getRidesQuerySchema.parse({
+      status: searchParams.get("status") || "all",
+      type: searchParams.get("type") || "all",
+      page: searchParams.get("page") || "1",
+      limit: searchParams.get("limit") || "20",
+      search: searchParams.get("search") || undefined,
+      startDate: searchParams.get("startDate") || undefined,
+      endDate: searchParams.get("endDate") || undefined,
     });
+
+    const result = await getRidesService(payload, query);
+
+    return NextResponse.json(result);
   } catch (error) {
-    console.error("Error fetching rides:", error);
-    return Response.json({ error: "Internal server error" }, { status: 500 });
+    return handleApiError(error);
   }
 }

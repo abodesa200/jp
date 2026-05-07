@@ -1,32 +1,30 @@
-import { handleApiError } from "@/core/http/error-handler";
-import { forbidden, unauthorized, verifyToken } from "@/services/auth/auth";
-import { getSupportTicketsQuerySchema } from "@/services/support/support.schema";
-import { getAllSupportTicketsService } from "@/services/support/support.service";
-import { NextRequest } from "next/server";
+import { handleApiError } from "@/server/core/http/http-errors";
+import { authenticate } from "@/server/lib/auth/auth";
+import {
+    getAllTicketsService,
+    getSupportTicketsQuerySchema,
+} from "@/server/modules/support";
+import { NextRequest, NextResponse } from "next/server";
 
 // ─────────────────────────────────────────────
-// GET /api/admin/support/tickets - Get all tickets (Admin)
+// GET /api/admin/support/tickets
+// Get all support tickets (Admin/Support staff)
 // ─────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
-    const payload = await verifyToken(req);
-    if (!payload) return unauthorized();
-    if (payload.role !== "ADMIN") return forbidden();
-
     try {
+        const payload = await authenticate(req);
+
         const { searchParams } = new URL(req.url);
         const query = getSupportTicketsQuerySchema.parse({
-            isResolved: searchParams.get("isResolved") || undefined,
-            page: searchParams.get("page") || undefined,
-            limit: searchParams.get("limit") || undefined,
+            status: searchParams.get("status") || "all",
+            page: searchParams.get("page") || "1",
+            limit: searchParams.get("limit") || "20",
         });
 
-        const result = await getAllSupportTicketsService(query);
+        const result = await getAllTicketsService(payload, query);
 
-        return Response.json({
-            success: true,
-            data: result,
-        });
+        return NextResponse.json(result);
     } catch (error) {
         return handleApiError(error);
     }

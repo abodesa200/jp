@@ -1,7 +1,10 @@
-import { handleApiError } from "@/core/http/error-handler";
-import { unauthorized, verifyToken } from "@/services/auth/auth";
-import { addFavoriteSchema } from "@/services/favorites/favorites.schema";
-import { addFavoriteService, getFavoritesService } from "@/services/favorites/favorites.service";
+import { handleApiError } from "@/server/core/http/error-handler";
+import { verifyToken } from "@/server/lib/auth/auth";
+import {
+    addFavoriteSchema,
+    addFavoriteService,
+    getFavoritesService,
+} from "@/server/modules/profile/favorites";
 import { NextRequest } from "next/server";
 
 // ─────────────────────────────────────────────
@@ -9,10 +12,9 @@ import { NextRequest } from "next/server";
 // ─────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
-    const payload = await verifyToken(req);
-    if (!payload) return unauthorized();
-
     try {
+        const payload = await verifyToken(req);
+
         const result = await getFavoritesService(payload);
 
         return Response.json({
@@ -29,19 +31,21 @@ export async function GET(req: NextRequest) {
 // ─────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
-    const payload = await verifyToken(req);
-    if (!payload) return unauthorized();
-
     try {
+        const payload = await verifyToken(req);
+
         const body = await req.json();
         const data = addFavoriteSchema.parse(body);
 
         const result = await addFavoriteService(payload, data);
 
-        return Response.json({
-            success: true,
-            data: result,
-        }, { status: 201 });
+        return Response.json(
+            {
+                success: true,
+                data: result,
+            },
+            { status: 201 }
+        );
     } catch (error) {
         return handleApiError(error);
     }
