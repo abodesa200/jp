@@ -1,5 +1,6 @@
-import { handleApiError } from "@/server/core/http/http-errors";
-import { authenticate } from "@/server/lib/auth/auth";
+
+import { handleApiError } from "@/server/core/http/error-handler";
+import { verifyToken } from "@/server/lib/auth/auth";
 import { getRideStatsService } from "@/server/modules/admin";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -10,7 +11,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
     try {
-        const payload = await authenticate(req);
+        const payload = await verifyToken(req);
 
         const result = await getRideStatsService(payload);
 

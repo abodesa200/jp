@@ -25,7 +25,6 @@ export async function POST(req: Request) {
             },
         });
 
-        // نفس الرسالة للحالتين — ما نكشف إذا الإيميل موجود أو لا
         if (!user || user.role !== "ADMIN" || !user.passwordHash) {
             return Response.json({ error: "Invalid credentials" }, { status: 401 });
         }

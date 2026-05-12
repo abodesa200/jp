@@ -1,5 +1,6 @@
-import { handleApiError } from "@/server/core/http/http-errors";
-import { authenticate } from "@/server/lib/auth/auth";
+
+import { handleApiError } from "@/server/core/http/error-handler";
+import { verifyToken } from "@/server/lib/auth/auth";
 import {
     createUserSchema,
     createUserService,
@@ -15,7 +16,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
     try {
-        const payload = await authenticate(req);
+        const payload = await verifyToken(req);
 
         const { searchParams } = new URL(req.url);
         const query = getUsersQuerySchema.parse({
@@ -40,7 +41,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     try {
-        const payload = await authenticate(req);
+        const payload = await verifyToken(req);
 
         const body = await req.json();
         const data = createUserSchema.parse(body);

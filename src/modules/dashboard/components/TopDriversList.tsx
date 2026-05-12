@@ -30,21 +30,21 @@ export function TopDriversList({ drivers }: TopDriversListProps) {
                             </div>
                             <Avatar>
                                 <AvatarFallback>
-                                    {driver.user.name?.charAt(0) || "?"}
+                                    {driver?.user.name?.charAt(0) || "?"}
                                 </AvatarFallback>
                             </Avatar>
                             <div className="flex-1">
                                 <p className="font-semibold">
-                                    {driver.user.name || "Unknown Driver"}
+                                    {driver?.user.name || "Unknown Driver"}
                                 </p>
                                 <p className="text-sm text-muted-foreground">
-                                    {driver.totalRides} rides completed
+                                    {driver?.totalRides} rides completed
                                 </p>
                             </div>
                             <div className="flex items-center gap-1 rounded-full bg-yellow-100 px-3 py-1 dark:bg-yellow-900">
                                 <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
                                 <span className="font-bold text-yellow-700 dark:text-yellow-300">
-                                    {driver.rating.toFixed(1)}
+                                    {driver?.rating.toFixed(1)}
                                 </span>
                             </div>
                         </div>

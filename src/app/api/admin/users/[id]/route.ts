@@ -1,5 +1,6 @@
-import { handleApiError } from "@/server/core/http/http-errors";
-import { authenticate } from "@/server/lib/auth/auth";
+
+import { handleApiError } from "@/server/core/http/error-handler";
+import { verifyToken } from "@/server/lib/auth/auth";
 import {
     deleteUserService,
     getUserByIdService,
@@ -18,7 +19,7 @@ export async function GET(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const payload = await authenticate(req);
+        const payload = await verifyToken(req);
         const { id } = await params;
         const userId = parseInt(id, 10);
 
@@ -47,7 +48,7 @@ export async function PATCH(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const payload = await authenticate(req);
+        const payload = await verifyToken(req);
         const { id } = await params;
         const userId = parseInt(id, 10);
 
@@ -79,7 +80,7 @@ export async function DELETE(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const payload = await authenticate(req);
+        const payload = await verifyToken(req);
         const { id } = await params;
         const userId = parseInt(id, 10);
 
