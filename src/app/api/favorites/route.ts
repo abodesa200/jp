@@ -4,7 +4,7 @@ import {
     addFavoriteSchema,
     addFavoriteService,
     getFavoritesService,
-} from "@/server/modules/profile/favorites";
+} from "@/server/modules/favorites";
 import { NextRequest } from "next/server";
 
 // ─────────────────────────────────────────────

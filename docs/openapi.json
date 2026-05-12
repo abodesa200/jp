@@ -205,16 +205,20 @@
                 "type": "object",
                 "properties": {
                   "userId": {
+                    "type": "number"
+                  },
+                  "title": {
                     "type": "string"
                   },
-                  "userIds": {
+                  "message": {
                     "type": "string"
                   }
                 }
               },
               "example": {
-                "userId": "<userId>",
-                "userIds": "<userIds>"
+                "userId": 0,
+                "title": "<title>",
+                "message": "<message>"
               }
             }
           }
@@ -1127,7 +1131,27 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": {}
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "description": "User"
+                  },
+                  "appContext": {
+                    "type": "string",
+                    "enum": [
+                      "client",
+                      "driver"
+                    ],
+                    "description": "User type: client (regular user) or driver (must exist and be approved)"
+                  }
+                }
+              },
+              "example": {
+                "email": "user@example.com",
+                "appContext": "client"
+              }
             }
           }
         }
@@ -1157,7 +1181,32 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": {}
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "description": "Email address"
+                  },
+                  "code": {
+                    "type": "string",
+                    "description": "6-digit verification code"
+                  },
+                  "appContext": {
+                    "type": "string",
+                    "enum": [
+                      "client",
+                      "driver"
+                    ],
+                    "description": "User type"
+                  }
+                }
+              },
+              "example": {
+                "email": "user@example.com",
+                "code": "012345",
+                "appContext": "client"
+              }
             }
           }
         }
@@ -1377,7 +1426,43 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": {}
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userId": {
+                    "type": "number"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "userIds": {
+                    "type": "array",
+                    "items": {}
+                  },
+                  "notificationId": {
+                    "type": "number"
+                  },
+                  "limit": {
+                    "type": "string"
+                  },
+                  "offset": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                }
+              },
+              "example": {
+                "userId": 0,
+                "title": "<title>",
+                "message": "<message>",
+                "userIds": [],
+                "notificationId": 0,
+                "limit": "<limit>",
+                "offset": "<offset>"
+              }
             }
           }
         }
@@ -1614,7 +1699,33 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": {}
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "email": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "phone": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "avatarUrl": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                }
+              },
+              "example": {
+                "name": "<name>",
+                "email": "<email>",
+                "phone": "<phone>",
+                "avatarUrl": "<avatarUrl>"
+              }
             }
           }
         }
@@ -1663,7 +1774,73 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": {}
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "email": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "phone": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "avatarUrl": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "licenseNumber": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "carModel": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "carPlate": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "carColor": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "carYear": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "isOnline": {
+                    "type": "boolean",
+                    "nullable": true
+                  },
+                  "latitude": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "longitude": {
+                    "type": "number",
+                    "nullable": true
+                  }
+                }
+              },
+              "example": {
+                "name": "<name>",
+                "email": "<email>",
+                "phone": "<phone>",
+                "avatarUrl": "<avatarUrl>",
+                "licenseNumber": "<licenseNumber>",
+                "carModel": "<carModel>",
+                "carPlate": "<carPlate>",
+                "carColor": "<carColor>",
+                "carYear": 0,
+                "isOnline": false,
+                "latitude": 0,
+                "longitude": 0
+              }
             }
           }
         }
@@ -2006,7 +2183,51 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": {}
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "discountType": {
+                    "type": "string",
+                    "enum": [
+                      "PERCENTAGE",
+                      "FIXED"
+                    ]
+                  },
+                  "discountValue": {
+                    "type": "number"
+                  },
+                  "expiresAt": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "maxUses": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "isActive": {
+                    "type": "boolean"
+                  },
+                  "page": {
+                    "type": "string"
+                  },
+                  "limit": {
+                    "type": "string"
+                  }
+                }
+              },
+              "example": {
+                "code": "<code>",
+                "discountType": "PERCENTAGE",
+                "discountValue": 0,
+                "expiresAt": "<expiresAt>",
+                "maxUses": 0,
+                "isActive": false,
+                "page": "<page>",
+                "limit": "<limit>"
+              }
             }
           }
         }

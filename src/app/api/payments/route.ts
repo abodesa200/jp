@@ -1,5 +1,5 @@
 import { handleApiError } from "@/server/core/http/error-handler";
-import {  verifyToken } from "@/server/lib/auth/auth";
+import { verifyToken } from "@/server/lib/auth/auth";
 import {
     getMyPaymentsService,
     getPaymentsQuerySchema,
@@ -11,9 +11,8 @@ import { NextRequest } from "next/server";
 // ─────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
-    const payload = await verifyToken(req);
-
     try {
+        const payload = await verifyToken(req);
         const { searchParams } = new URL(req.url);
         const query = getPaymentsQuerySchema.parse({
             status: searchParams.get("status") || undefined,

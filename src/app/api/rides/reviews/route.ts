@@ -1,10 +1,9 @@
 import { handleApiError } from "@/server/core/http/error-handler";
 import { verifyToken } from "@/server/lib/auth/auth";
 import {
-    
     getReviewsQuerySchema,
-} from "@/server/modules/profile/reviews";
-import { getMyReviewsService } from "@/server/modules/profile/reviews/reviews.service";
+} from "@/server/modules/rides/reviews";
+import { getMyReviewsService } from "@/server/modules/rides/reviews/reviews.service";
 import { NextRequest } from "next/server";
 
 // ─────────────────────────────────────────────

@@ -4,7 +4,7 @@ import {
     createReviewSchema,
     createReviewService,
     getRideReviewService,
-} from "@/server/modules/profile/reviews";
+} from "@/server/modules/rides/reviews";
 import { NextRequest } from "next/server";
 
 // ─────────────────────────────────────────────

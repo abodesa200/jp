@@ -8,8 +8,8 @@ export * from "./profile.schema";
 export * from "./profile.service";
 
 // Sub-Modules
-export * from "./favorites";
-export * from "./reviews";
+export * from "../favorites";
+export * from "../rides/reviews";
 export * from "./settings";
 
 

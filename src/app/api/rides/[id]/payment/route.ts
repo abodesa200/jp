@@ -1,5 +1,5 @@
 import { handleApiError } from "@/server/core/http/error-handler";
-import { unauthorized, verifyToken } from "@/server/lib/auth/auth";
+import { verifyToken } from "@/server/lib/auth/auth";
 import {
     createPaymentSchema,
     createPaymentService,
@@ -18,7 +18,6 @@ export async function POST(
     { params }: { params: Promise<{ id: string }> }
 ) {
     const payload = await verifyToken(req);
-    if (!payload) return unauthorized();
 
     try {
         const { id } = await params;
@@ -54,7 +53,7 @@ export async function GET(
     { params }: { params: Promise<{ id: string }> }
 ) {
     const payload = await verifyToken(req);
-    if (!payload) return unauthorized();
+ 
 
     try {
         const { id } = await params;
@@ -87,7 +86,7 @@ export async function PATCH(
     { params }: { params: Promise<{ id: string }> }
 ) {
     const payload = await verifyToken(req);
-    if (!payload) return unauthorized();
+   
 
     try {
         const { id } = await params;

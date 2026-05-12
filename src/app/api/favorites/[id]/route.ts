@@ -1,6 +1,6 @@
 import { handleApiError } from "@/server/core/http/error-handler";
 import { verifyToken } from "@/server/lib/auth/auth";
-import { deleteFavoriteService } from "@/server/modules/profile/favorites";
+import { deleteFavoriteService } from "@/server/modules/favorites";
 import { NextRequest } from "next/server";
 
 // ─────────────────────────────────────────────
