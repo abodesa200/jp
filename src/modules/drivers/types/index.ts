@@ -1,3 +1,16 @@
+export interface DriverUser {
+    id: number;
+    phone: string;
+    role: string;
+    isVerified: boolean;
+    name: string | null;
+    email: string | null;
+    avatarUrl: string | null;
+    passwordHash: string | null;
+    createdAt: string;
+    updatedAt: string;
+}
+
 export interface Driver {
     id: number;
     userId: number;
@@ -10,35 +23,26 @@ export interface Driver {
     isOnline: boolean;
     latitude: number | null;
     longitude: number | null;
+    lastLocationUpdate: string | null;
     rating: number;
     totalRides: number;
     createdAt: string;
     updatedAt: string;
-}
-
-export interface User {
-    id: number;
-    phone: string;
-    role: "CLIENT" | "DRIVER" | "ADMIN" | "CUSTOMER_SUPPORT";
-    isVerified: boolean;
-    name: string | null;
-    email: string | null;
-    avatarUrl: string | null;
-    passwordHash: string | null;
-    createdAt: string;
-    updatedAt: string;
-    driver: Driver | null;
+    user: DriverUser;
+    rides: unknown[];
+    reviews: unknown[];
 }
 
 export interface DriversListParams {
     page?: number;
     limit?: number;
-    approved?: boolean;
+    isApproved?: boolean;
+    isOnline?: boolean;
     search?: string;
 }
 
 export interface DriversListResponse {
-    users: User[];
+    drivers: Driver[];
     pagination: {
         page: number;
         limit: number;

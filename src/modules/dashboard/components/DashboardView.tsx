@@ -36,16 +36,14 @@ export function DashboardView() {
         );
     }
 
-    const now = new Date();
-    const hour = now.getHours();
+    const hour = new Date().getHours();
     const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
     return (
         <div className="space-y-8">
-            {/* Header */}
             <div className="flex items-start justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">{greeting} 👋</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">{greeting}</h1>
                     <p className="text-muted-foreground mt-1">
                         Here&apos;s what&apos;s happening on your platform today.
                     </p>

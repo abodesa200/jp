@@ -84,7 +84,6 @@ export function PaymentsView() {
         updateParams({ page });
     };
 
-    // Compute summary stats from current page
     const totalAmount = payments.reduce((sum, p) => sum + p.amount, 0);
     const paidCount = payments.filter((p) => p.status === "PAID").length;
     const pendingCount = payments.filter((p) => p.status === "PENDING").length;
@@ -105,7 +104,6 @@ export function PaymentsView() {
                 description="Monitor all platform transactions"
             />
 
-            {/* Stats */}
             <div className="grid gap-4 sm:grid-cols-3">
                 <StatCard
                     title="Total Volume"
@@ -130,7 +128,6 @@ export function PaymentsView() {
                 />
             </div>
 
-            {/* Filters */}
             <Card>
                 <CardHeader className="pb-4">
                     <CardTitle className="text-base font-medium">Filters</CardTitle>
@@ -163,7 +160,6 @@ export function PaymentsView() {
                 </CardContent>
             </Card>
 
-            {/* Table */}
             <Card>
                 <CardContent className="p-0">
                     {error ? (
@@ -206,11 +202,10 @@ export function PaymentsView() {
                 </CardContent>
             </Card>
 
-            {/* Pagination */}
-            {pagination.pages > 1 && (
+            {pagination.totalPages > 1 && (
                 <div className="flex items-center justify-between text-sm text-muted-foreground">
                     <span>
-                        Showing {((pagination.page - 1) * pagination.limit) + 1}–
+                        Showing {((pagination.page - 1) * pagination.limit) + 1}-
                         {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total}
                     </span>
                     <div className="flex gap-2">
@@ -225,7 +220,7 @@ export function PaymentsView() {
                         <Button
                             variant="outline"
                             size="sm"
-                            disabled={pagination.page >= pagination.pages}
+                            disabled={pagination.page >= pagination.totalPages}
                             onClick={() => handlePageChange(pagination.page + 1)}
                         >
                             Next
@@ -251,17 +246,17 @@ function PaymentRow({ payment }: { payment: Payment }) {
                         {payment.ride.client.name ?? "Unknown"}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                        {payment.ride.client.email ?? "—"}
+                        {payment.ride.client.email ?? "-"}
                     </p>
                 </div>
             </TableCell>
             <TableCell>
                 <div className="max-w-[200px]">
                     <p className="text-xs truncate text-muted-foreground">
-                        {payment.ride.pickupAddress ?? "—"}
+                        {payment.ride.pickupAddress ?? "-"}
                     </p>
                     <p className="text-xs truncate text-muted-foreground">
-                        → {payment.ride.dropoffAddress ?? "—"}
+                        -&gt; {payment.ride.dropoffAddress ?? "-"}
                     </p>
                 </div>
             </TableCell>

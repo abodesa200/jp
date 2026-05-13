@@ -1,5 +1,5 @@
 import { handleApiError } from "@/server/core/http/error-handler";
-import { unauthorized, verifyToken } from "@/server/lib/auth/auth";
+import { verifyToken } from "@/server/lib/auth/auth";
 import {
     createReviewSchema,
     createReviewService,
@@ -17,7 +17,6 @@ export async function POST(
 ) {
     try {
         const payload = await verifyToken(req);
-        if (!payload) return unauthorized();
 
         const { id } = await params;
         const rideId = parseInt(id);
@@ -56,7 +55,6 @@ export async function GET(
 ) {
     try {
         const payload = await verifyToken(req);
-        if (!payload) return unauthorized();
 
         const { id } = await params;
         const rideId = parseInt(id);

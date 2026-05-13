@@ -17,6 +17,12 @@ export class DashboardService {
             throw new Error("Failed to fetch dashboard stats");
         }
 
-        return response.json();
+        const json = await response.json();
+        const stats = json.stats;
+
+        return {
+            ...stats,
+            recentRides: stats.latestRides ?? [],
+        };
     }
 }

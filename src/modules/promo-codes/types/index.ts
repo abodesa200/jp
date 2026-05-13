@@ -37,6 +37,6 @@ export interface PromoCodesListResponse {
         page: number;
         limit: number;
         total: number;
-        pages: number;
+        totalPages: number;
     };
 }

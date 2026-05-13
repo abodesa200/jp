@@ -13,12 +13,12 @@ export class DriversService {
         const searchParams = new URLSearchParams({
             page: (params.page || 1).toString(),
             limit: (params.limit || 20).toString(),
-            role: "DRIVER",
-            ...(params.approved !== undefined && { approved: params.approved.toString() }),
+            ...(params.isApproved !== undefined && { isApproved: params.isApproved.toString() }),
+            ...(params.isOnline !== undefined && { isOnline: params.isOnline.toString() }),
             ...(params.search && { search: params.search }),
         });
 
-        const response = await fetch(`/api/admin/users?${searchParams}`, {
+        const response = await fetch(`/api/admin/drivers?${searchParams}`, {
             headers: this.getAuthHeaders(),
         });
 
@@ -26,11 +26,20 @@ export class DriversService {
             throw new Error("Failed to fetch drivers");
         }
 
-        return response.json();
+        const json = await response.json();
+        return {
+            drivers: json.drivers ?? [],
+            pagination: json.pagination ?? {
+                page: params.page || 1,
+                limit: params.limit || 20,
+                total: 0,
+                totalPages: 0,
+            },
+        };
     }
 
-    static async getDriver(id: string): Promise<Driver> {
-        const response = await fetch(`/api/admin/users/${id}`, {
+    static async getDriver(id: number): Promise<Driver> {
+        const response = await fetch(`/api/admin/drivers/${id}`, {
             headers: this.getAuthHeaders(),
         });
 
@@ -38,10 +47,11 @@ export class DriversService {
             throw new Error("Failed to fetch driver");
         }
 
-        return response.json();
+        const json = await response.json();
+        return json.driver;
     }
 
-    static async updateDriver(id: string, data: Partial<Driver>): Promise<Driver> {
+    static async updateDriver(id: number, data: Partial<Driver>): Promise<Driver> {
         const response = await fetch(`/api/admin/drivers/${id}`, {
             method: "PATCH",
             headers: this.getAuthHeaders(),
@@ -52,10 +62,11 @@ export class DriversService {
             throw new Error("Failed to update driver");
         }
 
-        return response.json();
+        const json = await response.json();
+        return json.driver;
     }
 
-    static async deleteDriver(id: string): Promise<void> {
+    static async deleteDriver(id: number): Promise<void> {
         const response = await fetch(`/api/admin/drivers/${id}`, {
             method: "DELETE",
             headers: this.getAuthHeaders(),
@@ -66,7 +77,7 @@ export class DriversService {
         }
     }
 
-    static async toggleApproval(id: string, currentStatus: boolean): Promise<Driver> {
+    static async toggleApproval(id: number, currentStatus: boolean): Promise<Driver> {
         return this.updateDriver(id, { isApproved: !currentStatus });
     }
 }

@@ -9,7 +9,7 @@ import {
 import { NextRequest } from "next/server";
 
 // ─────────────────────────────────────────────
-// POST /api/rides - إنشاء رحلة جديدة
+// POST /api/rides 
 // ─────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
 }
 
 // ─────────────────────────────────────────────
-// GET /api/rides - جلب رحلات المستخدم
+// GET /api/rides  
 // ─────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {

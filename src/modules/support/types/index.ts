@@ -18,7 +18,7 @@ export interface SupportTicket {
 export interface SupportTicketsListParams {
     page?: number;
     limit?: number;
-    isResolved?: boolean;
+    status?: "open" | "resolved";
 }
 
 export interface SupportTicketsListResponse {
@@ -27,6 +27,6 @@ export interface SupportTicketsListResponse {
         page: number;
         limit: number;
         total: number;
-        pages: number;
+        totalPages: number;
     };
 }

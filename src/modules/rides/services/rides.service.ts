@@ -29,7 +29,7 @@ export class RidesService {
         return response.json();
     }
 
-    static async getRide(id: string): Promise<Ride> {
+    static async getRide(id: number): Promise<Ride> {
         const response = await fetch(`/api/admin/rides/${id}`, {
             headers: this.getAuthHeaders(),
         });
@@ -38,10 +38,11 @@ export class RidesService {
             throw new Error("Failed to fetch ride");
         }
 
-        return response.json();
+        const json = await response.json();
+        return json.ride;
     }
 
-    static async deleteRide(id: string): Promise<void> {
+    static async deleteRide(id: number): Promise<void> {
         const response = await fetch(`/api/admin/rides/${id}`, {
             method: "DELETE",
             headers: this.getAuthHeaders(),
@@ -52,7 +53,7 @@ export class RidesService {
         }
     }
 
-    static async cancelRide(id: string): Promise<Ride> {
+    static async cancelRide(id: number): Promise<Ride> {
         const response = await fetch(`/api/rides/${id}/cancel`, {
             method: "POST",
             headers: this.getAuthHeaders(),
@@ -62,6 +63,7 @@ export class RidesService {
             throw new Error("Failed to cancel ride");
         }
 
-        return response.json();
+        const json = await response.json();
+        return json.data;
     }
 }

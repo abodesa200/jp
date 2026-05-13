@@ -70,7 +70,7 @@ function PromoRow({ promo }: { promo: PromoCode }) {
                 <div className="space-y-1">
                     <div className="flex items-center justify-between text-xs">
                         <span className="text-muted-foreground">
-                            {promo.currentUses} / {promo.maxUses ?? "∞"}
+                            {promo.currentUses} / {promo.maxUses ?? "?"}
                         </span>
                         {usagePercent !== null && (
                             <span className="text-muted-foreground">{usagePercent}%</span>
@@ -143,7 +143,6 @@ export function PromoCodesView() {
                 }}
             />
 
-            {/* Stats */}
             <div className="grid gap-4 sm:grid-cols-3">
                 <StatCard
                     title="Active Codes"
@@ -168,7 +167,6 @@ export function PromoCodesView() {
                 />
             </div>
 
-            {/* Filters */}
             <Card>
                 <CardHeader className="pb-4">
                     <CardTitle className="text-base font-medium">Filters</CardTitle>
@@ -193,7 +191,6 @@ export function PromoCodesView() {
                 </CardContent>
             </Card>
 
-            {/* Table */}
             <Card>
                 <CardContent className="p-0">
                     {error ? (
@@ -235,11 +232,10 @@ export function PromoCodesView() {
                 </CardContent>
             </Card>
 
-            {/* Pagination */}
-            {pagination.pages > 1 && (
+            {pagination.totalPages > 1 && (
                 <div className="flex items-center justify-between text-sm text-muted-foreground">
                     <span>
-                        Showing {((pagination.page - 1) * pagination.limit) + 1}–
+                        Showing {((pagination.page - 1) * pagination.limit) + 1}-
                         {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total}
                     </span>
                     <div className="flex gap-2">
@@ -254,7 +250,7 @@ export function PromoCodesView() {
                         <Button
                             variant="outline"
                             size="sm"
-                            disabled={pagination.page >= pagination.pages}
+                            disabled={pagination.page >= pagination.totalPages}
                             onClick={() => handlePageChange(pagination.page + 1)}
                         >
                             Next

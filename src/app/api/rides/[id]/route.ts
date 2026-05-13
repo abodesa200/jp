@@ -1,5 +1,5 @@
 import { handleApiError } from "@/server/core/http/error-handler";
-import { unauthorized, verifyToken } from "@/server/lib/auth/auth";
+import { verifyToken } from "@/server/lib/auth/auth";
 import {
   getRideDetailsService,
   updateRideStatusSchema,
@@ -15,10 +15,8 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const payload = await verifyToken(req);
-  if (!payload) return unauthorized();
-
   try {
+    const payload = await verifyToken(req);
     const { id } = await params;
     const result = await getRideDetailsService(payload, id);
 
@@ -39,10 +37,8 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const payload = await verifyToken(req);
-  if (!payload) return unauthorized();
-
   try {
+    const payload = await verifyToken(req);
     const { id } = await params;
     const body = await req.json();
     const data = updateRideStatusSchema.parse(body);

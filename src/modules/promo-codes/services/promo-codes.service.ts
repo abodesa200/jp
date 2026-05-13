@@ -10,10 +10,17 @@ export class PromoCodesService {
     }
 
     static async getPromoCodes(params: PromoCodesListParams): Promise<PromoCodesListResponse> {
+        const isActive =
+            params.isActive === undefined
+                ? undefined
+                : params.isActive
+                    ? "active"
+                    : "inactive";
+
         const searchParams = new URLSearchParams({
             page: (params.page || 1).toString(),
             limit: (params.limit || 20).toString(),
-            ...(params.isActive !== undefined && { isActive: params.isActive.toString() }),
+            ...(isActive && { isActive }),
         });
 
         const response = await fetch(`/api/admin/promo-codes?${searchParams}`, {
@@ -24,8 +31,7 @@ export class PromoCodesService {
             throw new Error("Failed to fetch promo codes");
         }
 
-        const json = await response.json();
-        return json.data;
+        return response.json();
     }
 
     static async createPromoCode(data: CreatePromoCodeData): Promise<PromoCode> {
@@ -41,6 +47,6 @@ export class PromoCodesService {
         }
 
         const json = await response.json();
-        return json.data;
+        return json.promoCode;
     }
 }

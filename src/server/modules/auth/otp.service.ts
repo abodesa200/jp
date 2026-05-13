@@ -34,7 +34,6 @@ export async function sendOtpService(data: SendOtpDTO) {
         }
     }
 
-    // 🔥 منع وجود OTP شغال
     const activeOtp = await otpRepository.findActiveOtp(email);
 
     if (activeOtp) {

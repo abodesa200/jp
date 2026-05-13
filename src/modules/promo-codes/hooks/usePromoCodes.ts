@@ -13,7 +13,7 @@ export function usePromoCodes(initialParams: PromoCodesListParams = {}) {
         page: 1,
         limit: 20,
         total: 0,
-        pages: 0,
+        totalPages: 0,
     });
 
     useEffect(() => {

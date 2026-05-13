@@ -38,7 +38,7 @@ export function useRides(initialParams: RidesListParams = {}) {
         setParams((prev) => ({ ...prev, ...newParams }));
     };
 
-    const deleteRide = async (id: string) => {
+    const deleteRide = async (id: number) => {
         try {
             await RidesService.deleteRide(id);
             await fetchRides();

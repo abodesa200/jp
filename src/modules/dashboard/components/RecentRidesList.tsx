@@ -34,9 +34,7 @@ export function RecentRidesList({ rides }: RecentRidesListProps) {
                             className="flex items-center justify-between rounded-lg bg-muted/50 p-3 transition-colors hover:bg-muted"
                         >
                             <div className="flex-1">
-                                <p className="font-semibold">
-                                    {ride.client.name || "Unknown Client"}
-                                </p>
+                                <p className="font-semibold">{ride.client.name || "Unknown Client"}</p>
                                 <p className="text-sm text-muted-foreground">
                                     {new Date(ride.createdAt).toLocaleDateString("en-US", {
                                         month: "short",
@@ -48,9 +46,7 @@ export function RecentRidesList({ rides }: RecentRidesListProps) {
                             </div>
                             <div className="flex items-center gap-3">
                                 <StatusBadge status={ride.status} />
-                                <p className="min-w-[60px] text-right font-bold">
-                                    ${ride.fare?.toFixed(2) || "—"}
-                                </p>
+                                <p className="min-w-[60px] text-right font-bold">${ride.fare?.toFixed(2) || "-"}</p>
                             </div>
                         </div>
                     ))}

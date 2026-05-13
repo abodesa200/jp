@@ -23,7 +23,7 @@ export class ReportsService {
         });
         if (!response.ok) throw new Error("Failed to fetch ride statistics");
         const json = await response.json();
-        return json.data;
+        return json.stats;
     }
 
     static async getRevenueStats(filters: ReportFilters = {}): Promise<RevenueStats> {
@@ -33,7 +33,7 @@ export class ReportsService {
         });
         if (!response.ok) throw new Error("Failed to fetch revenue statistics");
         const json = await response.json();
-        return json.data;
+        return json.stats;
     }
 
     static async getDriverStats(): Promise<DriverStats> {
@@ -42,7 +42,7 @@ export class ReportsService {
         });
         if (!response.ok) throw new Error("Failed to fetch driver statistics");
         const json = await response.json();
-        return json.data;
+        return json.stats;
     }
 
     static async getUserStats(filters: ReportFilters = {}): Promise<UserStats> {
@@ -52,6 +52,6 @@ export class ReportsService {
         });
         if (!response.ok) throw new Error("Failed to fetch user statistics");
         const json = await response.json();
-        return json.data;
+        return json.stats;
     }
 }

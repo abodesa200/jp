@@ -6,10 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Check, Eye, Star, Trash2, X } from "lucide-react";
 import Link from "next/link";
-import { User } from "../types";
+import { Driver } from "../types";
 
 interface DriversTableProps {
-    drivers: User[]; // ← كان Driver[]
+    drivers: Driver[];
     loading: boolean;
     pagination: {
         page: number;
@@ -33,41 +33,36 @@ export function DriversTable({
         {
             key: "driver",
             label: "Driver",
-            render: (user: User) => {
-                const driver = user.driver;
-                if (!driver) return null;
-
-                return (
-                    <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 font-semibold text-primary">
-                            {user.name?.charAt(0) || "?"}
-                        </div>
-                        <div>
-                            <p className="font-medium">{user.name || "Unknown"}</p>
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                {driver.isOnline ? (
-                                    <Badge variant="secondary" className="bg-green-100 text-green-700">
-                                        <span className="mr-1">●</span> Online
-                                    </Badge>
-                                ) : (
-                                    <Badge variant="outline">
-                                        <span className="mr-1">○</span> Offline
-                                    </Badge>
-                                )}
-                            </div>
+            render: (driver: Driver) => (
+                <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 font-semibold text-primary">
+                        {driver.user.name?.charAt(0) || "?"}
+                    </div>
+                    <div>
+                        <p className="font-medium">{driver.user.name || "Unknown"}</p>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            {driver.isOnline ? (
+                                <Badge variant="secondary" className="bg-green-100 text-green-700">
+                                    <span className="mr-1">�</span> Online
+                                </Badge>
+                            ) : (
+                                <Badge variant="outline">
+                                    <span className="mr-1">?</span> Offline
+                                </Badge>
+                            )}
                         </div>
                     </div>
-                );
-            },
+                </div>
+            ),
         },
         {
             key: "contact",
             label: "Contact",
-            render: (user: User) => (
+            render: (driver: Driver) => (
                 <div className="text-sm">
-                    <p>{user.phone}</p>
-                    {user.email && (
-                        <p className="text-muted-foreground">{user.email}</p>
+                    <p>{driver.user.phone}</p>
+                    {driver.user.email && (
+                        <p className="text-muted-foreground">{driver.user.email}</p>
                     )}
                 </div>
             ),
@@ -75,111 +70,77 @@ export function DriversTable({
         {
             key: "vehicle",
             label: "Vehicle",
-            render: (user: User) => {
-                const driver = user.driver;
-                if (!driver) return null;
-
-                return (
-                    <div className="text-sm">
-                        <p className="font-medium">{driver.carModel}</p>
-                        <p className="text-muted-foreground">{driver.carPlate}</p>
-                        {driver.carColor && (
-                            <p className="text-xs text-muted-foreground">{driver.carColor}</p>
-                        )}
-                    </div>
-                );
-            },
+            render: (driver: Driver) => (
+                <div className="text-sm">
+                    <p className="font-medium">{driver.carModel}</p>
+                    <p className="text-muted-foreground">{driver.carPlate}</p>
+                    {driver.carColor && (
+                        <p className="text-xs text-muted-foreground">{driver.carColor}</p>
+                    )}
+                </div>
+            ),
         },
         {
             key: "license",
             label: "License",
-            render: (user: User) => {
-                const driver = user.driver;
-                if (!driver) return null;
-
-                return (
-                    <span className="font-mono text-sm">{driver.licenseNumber}</span>
-                );
-            },
+            render: (driver: Driver) => <span className="font-mono text-sm">{driver.licenseNumber}</span>,
         },
         {
             key: "rating",
             label: "Rating",
-            render: (user: User) => {
-                const driver = user.driver;
-                if (!driver) return null;
-
-                return (
-                    <div className="flex items-center gap-1">
-                        <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
-                        <span className="font-semibold">{driver.rating.toFixed(1)}</span>
-                    </div>
-                );
-            },
+            render: (driver: Driver) => (
+                <div className="flex items-center gap-1">
+                    <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+                    <span className="font-semibold">{driver.rating.toFixed(1)}</span>
+                </div>
+            ),
         },
         {
             key: "rides",
             label: "Rides",
-            render: (user: User) => {
-                const driver = user.driver;
-                if (!driver) return null;
-
-                return (
-                    <span className="font-semibold">{driver.totalRides}</span>
-                );
-            },
+            render: (driver: Driver) => <span className="font-semibold">{driver.totalRides}</span>,
         },
         {
             key: "status",
             label: "Status",
-            render: (user: User) => {
-                const driver = user.driver;
-                if (!driver) return null;
-
-                return (
-                    <StatusBadge status={driver.isApproved ? "APPROVED" : "PENDING"} />
-                );
-            },
+            render: (driver: Driver) => (
+                <StatusBadge status={driver.isApproved ? "APPROVED" : "PENDING"} />
+            ),
         },
         {
             key: "actions",
             label: "Actions",
-            render: (user: User) => {
-                const driver = user.driver;
-                if (!driver) return null;
-
-                return (
-                    <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="sm" asChild>
-                            <Link href={`/admin/drivers/${driver.id}`}>
-                                <Eye className="h-4 w-4" />
-                            </Link>
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => onToggleApproval(driver.id, driver.isApproved)}
-                        >
-                            {driver.isApproved ? (
-                                <X className="h-4 w-4 text-orange-600" />
-                            ) : (
-                                <Check className="h-4 w-4 text-green-600" />
-                            )}
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                                if (confirm("Are you sure you want to delete this driver?")) {
-                                    onDelete(driver.id);
-                                }
-                            }}
-                        >
-                            <Trash2 className="h-4 w-4 text-red-600" />
-                        </Button>
-                    </div>
-                );
-            },
+            render: (driver: Driver) => (
+                <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/admin/drivers/${driver.id}`}>
+                            <Eye className="h-4 w-4" />
+                        </Link>
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onToggleApproval(driver.id, driver.isApproved)}
+                    >
+                        {driver.isApproved ? (
+                            <X className="h-4 w-4 text-orange-600" />
+                        ) : (
+                            <Check className="h-4 w-4 text-green-600" />
+                        )}
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                            if (confirm("Are you sure you want to delete this driver?")) {
+                                onDelete(driver.id);
+                            }
+                        }}
+                    >
+                        <Trash2 className="h-4 w-4 text-red-600" />
+                    </Button>
+                </div>
+            ),
         },
     ];
 

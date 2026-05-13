@@ -20,7 +20,7 @@ export interface DashboardStats {
 }
 
 export interface TopDriver {
-    id: string;
+    id: number;
     totalRides: number;
     rating: number;
     user: {
@@ -31,7 +31,7 @@ export interface TopDriver {
 }
 
 export interface RecentRide {
-    id: string;
+    id: number;
     status: string;
     fare: number | null;
     createdAt: string;

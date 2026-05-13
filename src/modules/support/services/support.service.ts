@@ -13,7 +13,7 @@ export class SupportService {
         const searchParams = new URLSearchParams({
             page: (params.page || 1).toString(),
             limit: (params.limit || 20).toString(),
-            ...(params.isResolved !== undefined && { isResolved: params.isResolved.toString() }),
+            ...(params.status && { status: params.status }),
         });
 
         const response = await fetch(`/api/admin/support/tickets?${searchParams}`, {
@@ -24,12 +24,11 @@ export class SupportService {
             throw new Error("Failed to fetch support tickets");
         }
 
-        const json = await response.json();
-        return json.data;
+        return response.json();
     }
 
     static async resolveTicket(ticketId: number): Promise<void> {
-        const response = await fetch(`/api/support/tickets/${ticketId}`, {
+        const response = await fetch(`/api/admin/support/tickets/${ticketId}`, {
             method: "PATCH",
             headers: this.getAuthHeaders(),
             body: JSON.stringify({ isResolved: true }),

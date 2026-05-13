@@ -1,5 +1,5 @@
 export interface Ride {
-    id: string;
+    id: number;
     status: RideStatus;
     type: RideType;
     fare: number | null;
@@ -19,7 +19,7 @@ export interface Ride {
         email: string | null;
     };
     driver: {
-        id: string;
+        id: number;
         licenseNumber: string;
         carModel: string;
         carPlate: string;

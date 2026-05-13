@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { ReportsService } from "../services/reports.service";
-import { DriverStats, ReportFilters, RevenueStats, RideStats, UserStats } from "../types";
+import { DriverStats, RevenueStats, RideStats, UserStats } from "../types";
 
-export function useReports(filters: ReportFilters = {}) {
+export function useReports() {
     const [rideStats, setRideStats] = useState<RideStats | null>(null);
     const [revenueStats, setRevenueStats] = useState<RevenueStats | null>(null);
     const [driverStats, setDriverStats] = useState<DriverStats | null>(null);
@@ -14,17 +14,17 @@ export function useReports(filters: ReportFilters = {}) {
 
     useEffect(() => {
         fetchAll();
-    }, [filters.startDate, filters.endDate]);
+    }, []);
 
     const fetchAll = async () => {
         try {
             setLoading(true);
             setError(null);
             const [rides, revenue, drivers, users] = await Promise.all([
-                ReportsService.getRideStats(filters),
-                ReportsService.getRevenueStats(filters),
+                ReportsService.getRideStats(),
+                ReportsService.getRevenueStats(),
                 ReportsService.getDriverStats(),
-                ReportsService.getUserStats(filters),
+                ReportsService.getUserStats(),
             ]);
             setRideStats(rides);
             setRevenueStats(revenue);

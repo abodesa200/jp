@@ -26,7 +26,16 @@ async function fetchUsers(filters: UsersFilters): Promise<UsersResponse> {
         throw new Error("Failed to fetch users");
     }
 
-    return res.json();
+    const json = await res.json();
+    return {
+        users: json.users ?? [],
+        pagination: json.pagination ?? {
+            page: filters.page ?? 1,
+            limit: filters.limit ?? 20,
+            total: 0,
+            totalPages: 0,
+        },
+    };
 }
 
 export default function useGetUsers(filters: UsersFilters) {

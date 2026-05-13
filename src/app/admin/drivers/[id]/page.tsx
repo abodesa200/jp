@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EditDriverDialog } from "@/modules/drivers/components/EditDriverDialog";
+import useGetDriverInfo from "@/modules/drivers/hooks/useGetDriverInfo";
+import type { Driver } from "@/modules/drivers/types";
 import {
   AlertCircle,
   ArrowLeft,
@@ -24,32 +26,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-
-interface Driver {
-  id: string;
-  licenseNumber: string;
-  carModel: string;
-  carPlate: string;
-  carColor: string | null;
-  carYear: number | null;
-  isApproved: boolean;
-  isOnline: boolean;
-  rating: number;
-  totalRides: number;
-  latitude: number | null;
-  longitude: number | null;
-  createdAt: string;
-  user: {
-    id: number;
-    phone: string;
-    name: string | null;
-    email: string | null;
-    avatarUrl: string | null;
-    isVerified: boolean;
-    createdAt: string;
-  };
-}
+import { useState } from "react";
 
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -80,32 +57,10 @@ function PageSkeleton() {
 export default function DriverDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const [driver, setDriver] = useState<Driver | null>(null);
-  const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-
-  useEffect(() => {
-    fetchDriver();
-  }, []);
-
-  const fetchDriver = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const res = await fetch(`/api/admin/drivers/${params.id}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to fetch driver");
-      setDriver(data.data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load driver");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: driver, isPending, isError, refetch } = useGetDriverInfo(Number(params.id));
 
   const toggleApproval = async () => {
     if (!driver) return;
@@ -120,7 +75,7 @@ export default function DriverDetailPage() {
         body: JSON.stringify({ isApproved: !driver.isApproved }),
       });
       if (!res.ok) throw new Error("Failed to update driver");
-      await fetchDriver();
+      await refetch();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update driver");
     } finally {
@@ -147,9 +102,9 @@ export default function DriverDetailPage() {
     }
   };
 
-  if (loading) return <PageSkeleton />;
+  if (isPending) return <PageSkeleton />;
 
-  if (error && !driver) {
+  if (isError && !driver) {
     return (
       <div className="flex flex-col items-center gap-4 py-16 text-center">
         <AlertCircle className="h-10 w-10 text-destructive" />
@@ -166,7 +121,7 @@ export default function DriverDetailPage() {
 
   if (!driver) return null;
 
-  const initials = driver.user.name
+  const initials = driver?.user?.name
     ? driver.user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
     : "DR";
 
@@ -403,7 +358,7 @@ export default function DriverDetailPage() {
         open={editDialogOpen}
         onOpenChange={setEditDialogOpen}
         driver={driver}
-        onSuccess={fetchDriver}
+        onSuccess={() => refetch()}
       />
     </div>
   );

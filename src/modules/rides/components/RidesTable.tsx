@@ -17,7 +17,7 @@ interface RidesTableProps {
         pageSize: number;
     };
     onPageChange: (page: number) => void;
-    onDelete: (id: string) => void;
+    onDelete: (id: number) => void;
 }
 
 export function RidesTable({
@@ -31,9 +31,7 @@ export function RidesTable({
         {
             key: "id",
             label: "ID",
-            render: (ride: Ride) => (
-                <span className="font-mono text-xs">{ride?.id}...</span>
-            ),
+            render: (ride: Ride) => <span className="font-mono text-xs">#{ride.id}</span>
         },
         {
             key: "client",
@@ -53,7 +51,7 @@ export function RidesTable({
                     <div>
                         <p className="font-medium">{ride.driver.user.name || "Unknown"}</p>
                         <p className="text-sm text-muted-foreground">
-                            {ride.driver.carModel} • {ride.driver.carPlate}
+                            {ride.driver.carModel} � {ride.driver.carPlate}
                         </p>
                     </div>
                 ) : (
@@ -63,30 +61,26 @@ export function RidesTable({
         {
             key: "type",
             label: "Type",
-            render: (ride: Ride) => <TypeBadge type={ride.type} />,
+            render: (ride: Ride) => <TypeBadge type={ride.type} />
         },
         {
             key: "distance",
             label: "Distance",
             render: (ride: Ride) => (
-                <span className="text-sm">
-                    {ride.distance ? `${ride.distance.toFixed(1)} km` : "—"}
-                </span>
+                <span className="text-sm">{ride.distance ? `${ride.distance.toFixed(1)} km` : "-"}</span>
             ),
         },
         {
             key: "fare",
             label: "Fare",
             render: (ride: Ride) => (
-                <span className="font-semibold">
-                    {ride.fare ? `$${ride.fare.toFixed(2)}` : "—"}
-                </span>
+                <span className="font-semibold">{ride.fare ? `$${ride.fare.toFixed(2)}` : "-"}</span>
             ),
         },
         {
             key: "status",
             label: "Status",
-            render: (ride: Ride) => <StatusBadge status={ride.status} />,
+            render: (ride: Ride) => <StatusBadge status={ride.status} />
         },
         {
             key: "date",

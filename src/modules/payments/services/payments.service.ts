@@ -24,7 +24,6 @@ export class PaymentsService {
             throw new Error("Failed to fetch payments");
         }
 
-        const json = await response.json();
-        return json.data;
+        return response.json();
     }
 }

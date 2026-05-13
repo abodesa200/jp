@@ -30,7 +30,7 @@ export function DriversView() {
         setApprovedFilter(value);
         updateParams({
             page: 1,
-            approved: value === "all" ? undefined : value === "true",
+            isApproved: value === "all" ? undefined : value === "true",
         });
     };
 

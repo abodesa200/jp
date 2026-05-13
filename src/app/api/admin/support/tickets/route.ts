@@ -1,5 +1,5 @@
-import { handleApiError } from "@/server/core/http/http-errors";
-import { authenticate } from "@/server/lib/auth/auth";
+import { handleApiError } from "@/server/core/http/error-handler";
+import { verifyToken } from "@/server/lib/auth/auth";
 import {
     getAllTicketsService,
     getSupportTicketsQuerySchema,
@@ -13,7 +13,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
     try {
-        const payload = await authenticate(req);
+        const payload = await verifyToken(req);
 
         const { searchParams } = new URL(req.url);
         const query = getSupportTicketsQuerySchema.parse({

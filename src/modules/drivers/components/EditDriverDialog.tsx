@@ -16,7 +16,7 @@ import { AlertCircle, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface Driver {
-    id: string;
+    id: number;
     licenseNumber: string;
     carModel: string;
     carPlate: string;

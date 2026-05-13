@@ -62,7 +62,6 @@ function TicketDetailDialog({
                     </DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
-                    {/* User info */}
                     <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-3">
                         <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                             <User className="h-4 w-4 text-primary" />
@@ -70,7 +69,7 @@ function TicketDetailDialog({
                         <div>
                             <p className="text-sm font-medium">{ticket.user.name ?? "Unknown"}</p>
                             <p className="text-xs text-muted-foreground">
-                                {ticket.user.email ?? ticket.user.phone ?? "—"} · {ticket.user.role}
+                                {ticket.user.email ?? ticket.user.phone ?? "-"} � {ticket.user.role}
                             </p>
                         </div>
                         <Badge
@@ -130,7 +129,7 @@ export function SupportView() {
         setStatusFilter(value);
         updateParams({
             page: 1,
-            isResolved: value === "all" ? undefined : value === "true",
+            status: value === "all" ? undefined : (value as "open" | "resolved"),
         });
     };
 
@@ -160,7 +159,6 @@ export function SupportView() {
                 description="Manage user support requests"
             />
 
-            {/* Stats */}
             <div className="grid gap-4 sm:grid-cols-3">
                 <StatCard
                     title="Total Tickets"
@@ -185,7 +183,6 @@ export function SupportView() {
                 />
             </div>
 
-            {/* Filters */}
             <Card>
                 <CardHeader className="pb-4">
                     <CardTitle className="text-base font-medium">Filters</CardTitle>
@@ -198,8 +195,8 @@ export function SupportView() {
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Tickets</SelectItem>
-                                <SelectItem value="false">Open Only</SelectItem>
-                                <SelectItem value="true">Resolved Only</SelectItem>
+                                <SelectItem value="open">Open Only</SelectItem>
+                                <SelectItem value="resolved">Resolved Only</SelectItem>
                             </SelectContent>
                         </Select>
                         <Button variant="outline" size="sm" onClick={refetch} className="ml-auto">
@@ -210,7 +207,6 @@ export function SupportView() {
                 </CardContent>
             </Card>
 
-            {/* Table */}
             <Card>
                 <CardContent className="p-0">
                     {error ? (
@@ -257,7 +253,7 @@ export function SupportView() {
                                                         {ticket.user.name ?? "Unknown"}
                                                     </p>
                                                     <p className="text-xs text-muted-foreground">
-                                                        {ticket.user.email ?? ticket.user.phone ?? "—"}
+                                                        {ticket.user.email ?? ticket.user.phone ?? "-"}
                                                     </p>
                                                 </div>
                                             </TableCell>
@@ -309,11 +305,10 @@ export function SupportView() {
                 </CardContent>
             </Card>
 
-            {/* Pagination */}
-            {pagination.pages > 1 && (
+            {pagination.totalPages > 1 && (
                 <div className="flex items-center justify-between text-sm text-muted-foreground">
                     <span>
-                        Showing {((pagination.page - 1) * pagination.limit) + 1}–
+                        Showing {((pagination.page - 1) * pagination.limit) + 1}-
                         {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total}
                     </span>
                     <div className="flex gap-2">
@@ -328,7 +323,7 @@ export function SupportView() {
                         <Button
                             variant="outline"
                             size="sm"
-                            disabled={pagination.page >= pagination.pages}
+                            disabled={pagination.page >= pagination.totalPages}
                             onClick={() => handlePageChange(pagination.page + 1)}
                         >
                             Next

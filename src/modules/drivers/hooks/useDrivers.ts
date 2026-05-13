@@ -20,12 +20,12 @@ export function useDrivers(initialParams: DriversListParams = {}) {
         fetchDrivers();
     }, [params]);
 
-    const fetchDrivers = async () => {
+    const fetchDrivers = async (): Promise<void> => {
         try {
             setLoading(true);
             setError(null);
             const data = await DriversService.getDrivers(params);
-            setDrivers(data.users);
+            setDrivers(data.drivers);
             setPagination(data.pagination);
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to fetch drivers");
@@ -38,7 +38,7 @@ export function useDrivers(initialParams: DriversListParams = {}) {
         setParams((prev) => ({ ...prev, ...newParams }));
     };
 
-    const toggleApproval = async (id: string, currentStatus: boolean) => {
+    const toggleApproval = async (id: number, currentStatus: boolean) => {
         try {
             await DriversService.toggleApproval(id, currentStatus);
             await fetchDrivers();
@@ -47,7 +47,7 @@ export function useDrivers(initialParams: DriversListParams = {}) {
         }
     };
 
-    const deleteDriver = async (id: string) => {
+    const deleteDriver = async (id: number) => {
         try {
             await DriversService.deleteDriver(id);
             await fetchDrivers();

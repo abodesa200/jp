@@ -100,12 +100,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       setIsAuthenticated(true);
 
       // Fetch pending drivers count
-      fetch("/api/admin/drivers?isApproved=true&limit=1", {
+      fetch("/api/admin/drivers?isApproved=false&limit=1", {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((r) => r.json())
         .then((d) => {
-          if (d.data?.pagination?.total) setPendingCount(d.data.pagination.total);
+          setPendingCount(d.pagination?.total ?? 0);
         })
         .catch(() => { });
     } catch {

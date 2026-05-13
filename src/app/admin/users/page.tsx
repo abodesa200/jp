@@ -49,8 +49,8 @@ export default function UsersPage() {
   };
 
   const users = data?.users || [];
-  const total = data?.total || 0;
-  const totalPages = data?.totalPages || 1;
+  const total = data?.pagination?.total || 0;
+  const totalPages = data?.pagination?.totalPages || 1;
 
   return (
     <div className="space-y-6">

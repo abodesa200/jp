@@ -69,14 +69,16 @@ export function CreateDriverDialog({ open, onOpenChange, onSuccess }: CreateDriv
         try {
             const body: Record<string, unknown> = {
                 name: form.name.trim(),
-                licenseNumber: form.licenseNumber.trim(),
-                carModel: form.carModel.trim(),
-                carPlate: form.carPlate.trim(),
-                isApproved: form.isApproved,
+                role: "DRIVER",
+                driverInfo: {
+                    licenseNumber: form.licenseNumber.trim(),
+                    carModel: form.carModel.trim(),
+                    carPlate: form.carPlate.trim(),
+                },
             };
             if (form.email.trim()) body.email = form.email.trim();
             if (form.phone.trim()) body.phone = form.phone.trim();
-            if (form.carColor.trim()) body.carColor = form.carColor.trim();
+            if (form.carColor.trim()) (body.driverInfo as Record<string, unknown>).carColor = form.carColor.trim();
             if (form.carYear.trim()) {
                 const year = parseInt(form.carYear);
                 if (isNaN(year) || year < 1900 || year > 2100) {
@@ -84,10 +86,10 @@ export function CreateDriverDialog({ open, onOpenChange, onSuccess }: CreateDriv
                     setLoading(false);
                     return;
                 }
-                body.carYear = year;
+                (body.driverInfo as Record<string, unknown>).carYear = year;
             }
 
-            const res = await fetch("/api/admin/drivers", {
+            const res = await fetch("/api/admin/users", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -98,6 +100,17 @@ export function CreateDriverDialog({ open, onOpenChange, onSuccess }: CreateDriv
 
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || "Failed to create driver");
+
+            if (form.isApproved && data.user?.driver?.id) {
+                await fetch(`/api/admin/drivers/${data.user.driver.id}`, {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
+                    body: JSON.stringify({ isApproved: true }),
+                });
+            }
 
             setForm(initialForm);
             onOpenChange(false);

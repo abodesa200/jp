@@ -1,60 +1,32 @@
 export interface RideStats {
-    summary: {
-        totalRides: number;
-        completedRides: number;
-        cancelledRides: number;
-        activeRides: number;
-    };
-    byStatus: { status: string; count: number }[];
-    byType: { type: string; count: number }[];
-    metrics: {
-        averageFare: number;
-        averageDistance: number;
-        averageDuration: number;
-        totalRevenue: number;
-        totalDistance: number;
-    };
+    total: number;
+    requested: number;
+    accepted: number;
+    inProgress: number;
+    completed: number;
+    cancelled: number;
 }
 
 export interface RevenueStats {
-    summary: {
-        totalRevenue: number;
-        averageTransaction: number;
-        totalTransactions: number;
-    };
-    byMethod: { method: string; revenue: number; count: number }[];
-    byStatus: { status: string; revenue: number; count: number }[];
+    total: number;
+    daily: number;
+    weekly: number;
+    monthly: number;
 }
 
 export interface DriverStats {
-    summary: {
-        totalDrivers: number;
-        approvedDrivers: number;
-        pendingDrivers: number;
-        onlineDrivers: number;
-        averageRating: number;
-        averageRidesPerDriver: number;
-    };
-    topDrivers: {
-        id: number;
-        name: string | null;
-        avatarUrl: string | null;
-        rating: number;
-        totalRides: number;
-        carModel: string;
-    }[];
-    byStatus: { isApproved: boolean; count: number }[];
+    total: number;
+    approved: number;
+    pending: number;
+    online: number;
+    offline: number;
 }
 
 export interface UserStats {
-    summary: {
-        totalUsers: number;
-        newUsers: number;
-        verifiedUsers: number;
-        activeClients: number;
-        activeDrivers: number;
-    };
-    byRole: { role: string; count: number }[];
+    total: number;
+    verified: number;
+    unverified: number;
+    recentGrowth: number;
 }
 
 export interface ReportFilters {
