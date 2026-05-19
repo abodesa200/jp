@@ -37,7 +37,7 @@ export async function joinCarpoolingService(
     }
 
     // Validate ride is carpooling type
-    if (ride.type !== "CARPOOLING") {
+    if (ride.rideMode !== "CARPOOLING") {
         throw new ForbiddenError("Can only join carpooling rides");
     }
 
@@ -73,8 +73,11 @@ export async function joinCarpoolingService(
         data.dropoffLat,
         data.dropoffLng
     );
-    const fare = calculateFare(distance);
-
+    const fare = calculateFare(
+        distance,
+        ride.serviceType,
+        "CARPOOLING"
+    );
     // Add passenger and decrement available seats in a transaction
     const result = await carpoolingRepository.addPassenger(
         rideId,
@@ -154,7 +157,7 @@ export async function getRidePassengersService(
     }
 
     // Validate ride is carpooling
-    if (ride.type !== "CARPOOLING") {
+    if (ride.rideMode !== "CARPOOLING") {
         throw new ForbiddenError("This is not a carpooling ride");
     }
 

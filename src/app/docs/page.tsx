@@ -5,7 +5,9 @@ import 'swagger-ui-react/swagger-ui.css'
 
 export default function DocsPage() {
     return (
-        <SwaggerUI url="/api/openapi"   filter={true}
-/>
+        <SwaggerUI url="/api/openapi" filter={true}
+            persistAuthorization={true}
+
+        />
     )
 }

@@ -24,37 +24,48 @@ type Payload = {
 
 export async function createRideService(payload: Payload, data: CreateRideDTO) {
     if (payload.role !== "CLIENT") {
-        throw new ForbiddenError("Only clients can request rides");
+      throw new ForbiddenError("Only clients can request rides");
     }
-
+  
     const {
-        pickupLat,
-        pickupLng,
-        dropoffLat,
-        dropoffLng,
+      pickupLat,
+      pickupLng,
+      dropoffLat,
+      dropoffLng,
+      serviceType,
+      rideMode,
     } = data;
-
-    const distance = calculateDistance(pickupLat, pickupLng, dropoffLat, dropoffLng);
-    const systemFare = calculateFare(distance);
+  
+    const distance = calculateDistance(
+      pickupLat,
+      pickupLng,
+      dropoffLat,
+      dropoffLng
+    );
+  
+    const systemFare = calculateFare(
+      distance,
+      serviceType,
+      rideMode
+    );
+  
     const estimatedDuration = calculateEstimatedDuration(distance);
-
+  
     const ride = await ridesRepository.createRide(payload.userId, {
-        ...data,
-        distance,
-        systemFare,
-        estimatedDuration,
+      ...data,
+      distance,
+      systemFare,
+      estimatedDuration,
     });
-
-    // Notify all online drivers about new ride
+  
     emitSocketEvent("drivers", "ride:created", {
-        ride: mapRide(ride),
+      ride: mapRide(ride),
     });
-
+  
     return {
-        ride: mapRide(ride),
+      ride: mapRide(ride),
     };
-}
-
+  }
 // ─────────────────────────────────────────────
 // Get User Rides Service
 // ─────────────────────────────────────────────

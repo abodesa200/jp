@@ -40,9 +40,20 @@ enum PaymentMethod {
   WALLET
 }
 
-enum RideType {
-  STANDARD // رحلة عادية 1-1
-  CARPOOLING // مشاركة الركوب
+enum RideMode {
+  PRIVATE
+  CARPOOLING
+}
+
+enum RideFlow {
+  NORMAL
+  NEGOTIATION
+}
+
+enum ServiceType {
+  STANDARD
+  VIP
+  VAN
 }
 
 enum NegotiationStatus {
@@ -119,15 +130,18 @@ model Driver {
 // ─────────────────────────────────────────────
 
 model Ride {
-  id       Int  @id @default(autoincrement())
+  id       Int      @id @default(autoincrement())
   clientId Int
   driverId Int?
+  rideFlow RideFlow @default(NORMAL) 
 
   client User    @relation("ClientRides", fields: [clientId], references: [id])
   driver Driver? @relation(fields: [driverId], references: [id])
 
-  status RideStatus @default(REQUESTED)
-  type   RideType   @default(STANDARD)
+  status   RideStatus @default(REQUESTED)
+  rideMode RideMode   @default(PRIVATE)
+
+  serviceType ServiceType @default(STANDARD)
 
   // Carpooling
   maxPassengers  Int             @default(1) // 1 = standard, 2-4 = carpooling

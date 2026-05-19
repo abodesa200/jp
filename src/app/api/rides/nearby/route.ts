@@ -1,9 +1,8 @@
 import { handleApiError } from "@/server/core/http/error-handler";
-import {  verifyToken } from "@/server/lib/auth/auth";
-import {
-  getNearbyRidesQuerySchema,
-  getNearbyRidesService,
-} from "@/server/modules/rides";
+import { verifyToken } from "@/server/lib/auth/auth";
+import { getNearbyRidesQuerySchema } from "@/server/modules/rides/rides.schema";
+import { getNearbyRidesService } from "@/server/modules/rides/rides.service";
+
 import { NextRequest } from "next/server";
 
 // ─────────────────────────────────────────────
@@ -11,9 +10,10 @@ import { NextRequest } from "next/server";
 // ─────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
-  const payload = await verifyToken(req);
 
   try {
+    const payload = await verifyToken(req);
+
     const { searchParams } = new URL(req.url);
     const query = getNearbyRidesQuerySchema.parse({
       maxDistance: searchParams.get("maxDistance") || undefined,

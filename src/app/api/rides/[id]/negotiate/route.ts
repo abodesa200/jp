@@ -45,9 +45,10 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const payload = await verifyToken(req);
 
   try {
+    const payload = await verifyToken(req);
+
     const { id } = await params;
     const body = await req.json();
     const data = respondToNegotiationSchema.parse(body);

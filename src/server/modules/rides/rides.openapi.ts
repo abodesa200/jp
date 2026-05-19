@@ -6,7 +6,7 @@ import { rideHistoryQuerySchema } from './history/history.schema'
 import { negotiateRideSchema, respondToNegotiationSchema } from './negotiation/negotiation.schema'
 import { createPaymentSchema, updatePaymentSchema } from './payment/payment.schema'
 import { createReviewSchema, getReviewsQuerySchema } from './reviews/reviews.schema'
-import { createRideSchema, getNearbyRidesQuerySchema, getRidesQuerySchema } from './rides.schema'
+import { createRideOpenApiSchema, getNearbyRidesQuerySchema, getRidesQuerySchema } from './rides.schema'
 import { cancelRideSchema, updateRideStatusSchema } from './status/status.schema'
 
 const rideIdParams = z.object({ id: z.string() })
@@ -28,17 +28,40 @@ registry.registerPath({
         body: {
             content: {
                 'application/json': {
-                    schema: createRideSchema,
+                    schema: createRideOpenApiSchema,
                 },
             },
         },
     },
+    // responses: {
+    //     201: {
+    //         description: 'Ride created successfully',
+    //         content: {
+    //             'application/json': {
+    //                 schema: z.object({        // ← هاد الجديد
+    //                     success: z.boolean().openapi({ example: true }),
+    //                     data: z.object({
+    //                         id: z.string().openapi({ example: "clx1ride456" }),
+    //                         status: z.string().openapi({ example: "PENDING" }),
+    //                     }),
+    //                 }),
+    //             },
+    //         },
+    //     },
+    //     400: { description: 'Validation error' },
+    //     401: { description: 'Unauthorized' },
+    // },
     responses: {
-        201: { description: 'Ride created successfully' },
-        400: { description: 'Validation error' },
-        401: { description: 'Unauthorized' },
-    },
-})
+        201: {
+            description: 'Ride created successfully',
+            content: {
+                'application/json': {
+                    schema: createRideOpenApiSchema, // ← يستاهل
+                },
+            },
+        },
+    }
+});
 
 // ─────────────────────────────────────────────
 // [CLIENT] GET /api/rides - Get my rides

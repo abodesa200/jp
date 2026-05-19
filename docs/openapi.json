@@ -21,6 +21,9 @@
       "name": "Drivers"
     },
     {
+      "name": "Favorites"
+    },
+    {
       "name": "Notifications"
     },
     {
@@ -1131,27 +1134,7 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "email": {
-                    "type": "string",
-                    "description": "User"
-                  },
-                  "appContext": {
-                    "type": "string",
-                    "enum": [
-                      "client",
-                      "driver"
-                    ],
-                    "description": "User type: client (regular user) or driver (must exist and be approved)"
-                  }
-                }
-              },
-              "example": {
-                "email": "user@example.com",
-                "appContext": "client"
-              }
+              "schema": {}
             }
           }
         }
@@ -1181,32 +1164,7 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "email": {
-                    "type": "string",
-                    "description": "Email address"
-                  },
-                  "code": {
-                    "type": "string",
-                    "description": "6-digit verification code"
-                  },
-                  "appContext": {
-                    "type": "string",
-                    "enum": [
-                      "client",
-                      "driver"
-                    ],
-                    "description": "User type"
-                  }
-                }
-              },
-              "example": {
-                "email": "user@example.com",
-                "code": "012345",
-                "appContext": "client"
-              }
+              "schema": {}
             }
           }
         }
@@ -1378,6 +1336,85 @@
           "content": {
             "application/json": {
               "schema": {}
+            }
+          }
+        }
+      }
+    },
+    "/api/favorites": {
+      "get": {
+        "summary": "GET /api/favorites",
+        "description": "",
+        "operationId": "getFavorites",
+        "tags": [
+          "Favorites"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "POST /api/favorites",
+        "description": "",
+        "operationId": "createFavorites",
+        "tags": [
+          "Favorites"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "description": "Request body",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        }
+      }
+    },
+    "/api/favorites/{id}": {
+      "delete": {
+        "summary": "DELETE /api/favorites/{id}",
+        "description": "",
+        "operationId": "deleteFavoritesId",
+        "tags": [
+          "Favorites"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
             }
           }
         }
@@ -1846,155 +1883,6 @@
         }
       }
     },
-    "/api/profile/favorites": {
-      "get": {
-        "summary": "GET /api/profile/favorites",
-        "description": "",
-        "operationId": "getProfileFavorites",
-        "tags": [
-          "Profile"
-        ],
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "summary": "POST /api/profile/favorites",
-        "description": "",
-        "operationId": "createProfileFavorites",
-        "tags": [
-          "Profile"
-        ],
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "description": "Request body",
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {}
-            }
-          }
-        }
-      }
-    },
-    "/api/profile/favorites/{id}": {
-      "delete": {
-        "summary": "DELETE /api/profile/favorites/{id}",
-        "description": "",
-        "operationId": "deleteProfileFavoritesId",
-        "tags": [
-          "Profile"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/profile/reviews": {
-      "get": {
-        "summary": "GET /api/profile/reviews",
-        "description": "",
-        "operationId": "getProfileReviews",
-        "tags": [
-          "Profile"
-        ],
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/profile/settings": {
-      "get": {
-        "summary": "GET /api/profile/settings",
-        "description": "",
-        "operationId": "getProfileSettings",
-        "tags": [
-          "Profile"
-        ],
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          }
-        }
-      },
-      "patch": {
-        "summary": "PATCH /api/profile/settings",
-        "description": "",
-        "operationId": "patchProfileSettings",
-        "tags": [
-          "Profile"
-        ],
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "description": "Request body",
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {}
-            }
-          }
-        }
-      }
-    },
     "/api/rides": {
       "get": {
         "summary": "GET /api/rides",
@@ -2038,7 +1926,26 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": {}
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "page": {
+                    "type": "string"
+                  },
+                  "limit": {
+                    "type": "string"
+                  }
+                }
+              },
+              "example": {
+                "status": "<status>",
+                "page": "<page>",
+                "limit": "<limit>"
+              }
             }
           }
         }
@@ -2686,6 +2593,27 @@
         "summary": "GET /api/rides/nearby",
         "description": "",
         "operationId": "getRidesNearby",
+        "tags": [
+          "Rides"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/rides/reviews": {
+      "get": {
+        "summary": "GET /api/rides/reviews",
+        "description": "",
+        "operationId": "getRidesReviews",
         "tags": [
           "Rides"
         ],

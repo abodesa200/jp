@@ -128,7 +128,7 @@ export async function getRidePassengers(rideId: number) {
 export async function getAvailableCarpoolingRides(userId: number) {
     return prisma.ride.findMany({
         where: {
-            type: "CARPOOLING",
+            rideMode: "CARPOOLING",
             status: {
                 in: ["REQUESTED", "ACCEPTED"],
             },
@@ -183,7 +183,7 @@ export async function findRideBasicInfo(rideId: number) {
             id: true,
             clientId: true,
             driverId: true,
-            type: true,
+            rideMode: true,
         },
     });
 }

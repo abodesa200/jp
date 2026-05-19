@@ -1,10 +1,8 @@
 import { handleApiError } from "@/server/core/http/error-handler";
 import { verifyToken } from "@/server/lib/auth/auth";
-import {
-  getRideDetailsService,
-  updateRideStatusSchema,
-  updateRideStatusService,
-} from "@/server/modules/rides";
+import { getRideDetailsService } from "@/server/modules/rides/rides.service";
+import { updateRideStatusSchema, updateRideStatusService } from "@/server/modules/rides/status";
+
 import { NextRequest } from "next/server";
 
 // ─────────────────────────────────────────────

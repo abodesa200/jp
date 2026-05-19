@@ -1,11 +1,8 @@
 import { handleApiError } from "@/server/core/http/error-handler";
 import { verifyToken } from "@/server/lib/auth/auth";
-import {
-  createRideSchema,
-  createRideService,
-  getRidesQuerySchema,
-  getUserRidesService,
-} from "@/server/modules/rides";
+import { createRideSchema, getRidesQuerySchema } from "@/server/modules/rides/rides.schema";
+import { createRideService, getUserRidesService } from "@/server/modules/rides/rides.service";
+
 import { NextRequest } from "next/server";
 
 // ─────────────────────────────────────────────
@@ -13,12 +10,10 @@ import { NextRequest } from "next/server";
 // ─────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
-  const payload = await verifyToken(req);
-
   try {
+    const payload = await verifyToken(req);
     const body = await req.json();
     const data = createRideSchema.parse(body);
-
     const result = await createRideService(payload, data);
 
     return Response.json({
