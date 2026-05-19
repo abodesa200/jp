@@ -133,7 +133,7 @@ model Ride {
   id       Int      @id @default(autoincrement())
   clientId Int
   driverId Int?
-  rideFlow RideFlow @default(NORMAL) 
+  rideFlow RideFlow @default(NORMAL)
 
   client User    @relation("ClientRides", fields: [clientId], references: [id])
   driver Driver? @relation(fields: [driverId], references: [id])
@@ -149,9 +149,10 @@ model Ride {
   passengers     RidePassenger[]
 
   // Negotiation
-  systemFare  Float? // السعر اللي حسبه النظام
+  systemFare  Float?
   negotiation Negotiation?
 
+  clientOffer   Float?
   pickupLat     Float
   pickupLng     Float
   pickupAddress String?

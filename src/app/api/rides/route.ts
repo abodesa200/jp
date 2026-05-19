@@ -21,6 +21,7 @@ export async function POST(req: NextRequest) {
       data: result,
     });
   } catch (error) {
+
     return handleApiError(error);
   }
 }

@@ -24,11 +24,14 @@ export async function createRide(
       dropoffAddress: data.dropoffAddress,
       rideMode: data.rideMode,
       serviceType: data.serviceType,
+      rideFlow: data.rideFlow,
+      clientOffer: data.clientOffer,
+
       maxPassengers: data.maxPassengers,
       availableSeats: data.maxPassengers,
       systemFare: data.systemFare,
       distance: data.distance,
-      
+
       duration: data.estimatedDuration,
       status: "REQUESTED",
     },

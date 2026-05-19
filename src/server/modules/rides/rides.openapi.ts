@@ -6,7 +6,7 @@ import { rideHistoryQuerySchema } from './history/history.schema'
 import { negotiateRideSchema, respondToNegotiationSchema } from './negotiation/negotiation.schema'
 import { createPaymentSchema, updatePaymentSchema } from './payment/payment.schema'
 import { createReviewSchema, getReviewsQuerySchema } from './reviews/reviews.schema'
-import { createRideOpenApiSchema, getNearbyRidesQuerySchema, getRidesQuerySchema } from './rides.schema'
+import { calculateRidePriceSchema, createRideOpenApiSchema, getNearbyRidesQuerySchema, getRidesQuerySchema } from './rides.schema'
 import { cancelRideSchema, updateRideStatusSchema } from './status/status.schema'
 
 const rideIdParams = z.object({ id: z.string() })
@@ -91,6 +91,54 @@ registry.registerPath({
     },
 })
 
+
+// ─────────────────────────────────────────────
+// [CLIENT] POST /api/rides/calculate-price
+// ─────────────────────────────────────────────
+
+registry.registerPath({
+    method: "post",
+
+    path: "/api/rides/calculate-price",
+
+    tags: ["Rides – Client"],
+
+    summary: "Calculate estimated ride price",
+
+    request: {
+        body: {
+            content: {
+                "application/json": {
+                    schema: calculateRidePriceSchema,
+                },
+            },
+        },
+    },
+
+    responses: {
+        200: {
+            description: "Ride price calculated successfully",
+
+            content: {
+                "application/json": {
+                    schema: calculateRidePriceSchema,
+                },
+            },
+        },
+
+        400: {
+            description: "Validation error",
+        },
+
+        401: {
+            description: "Unauthorized",
+        },
+
+        403: {
+            description: "Only clients can calculate price",
+        },
+    },
+})
 // ─────────────────────────────────────────────
 // [CLIENT] GET /api/rides/history - Ride history with filters
 // ─────────────────────────────────────────────

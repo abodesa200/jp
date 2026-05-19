@@ -10,11 +10,11 @@ extendZodWithOpenApi(z);
 // ─────────────────────────────────────────────
 
 export const createRideOpenApiSchema = z.object({
-  pickupLat:      z.number().min(-90).max(90),
-  pickupLng:      z.number().min(-180).max(180),
-  pickupAddress:  z.string().optional(),
-  dropoffLat:     z.number().min(-90).max(90),
-  dropoffLng:     z.number().min(-180).max(180),
+  pickupLat: z.number().min(-90).max(90),
+  pickupLng: z.number().min(-180).max(180),
+  pickupAddress: z.string().optional(),
+  dropoffLat: z.number().min(-90).max(90),
+  dropoffLng: z.number().min(-180).max(180),
   dropoffAddress: z.string().optional(),
 
   serviceType: z.enum(["STANDARD", "VIP", "VAN"]).default("STANDARD").openapi({
@@ -30,7 +30,7 @@ export const createRideOpenApiSchema = z.object({
     example: "NORMAL",
   }),
   maxPassengers: z.number().int().min(1).max(8).default(1),
-  clientOffer:   z.number().positive().optional().openapi({
+  clientOffer: z.number().positive().optional().openapi({
     description: "مطلوب فقط إذا rideFlow = NEGOTIATION",
     example: 12.5,
   }),
@@ -85,6 +85,32 @@ export const createRideSchema = createRideOpenApiSchema.superRefine((data, ctx) 
   }
 });
 
+
+
+
+export const calculateRidePriceSchema = z.object({
+  pickupLat: z.number().openapi({
+    description: "خط العرض لموقع الالتقاط",
+    example: 30.0444,
+  }),
+  pickupLng: z.number().openapi({
+    description: "خط الطول لموقع الالتقاط",
+    example: 31.2357,
+  }),
+  dropoffLat: z.number().openapi({
+    description: "خط العرض لموقع الوصول",
+    example: 30.0444,
+  }),
+  dropoffLng: z.number().openapi({
+    description: "خط الطول لموقع الوصول",
+    example: 31.2357,
+  }),
+
+  serviceType: z.enum(["STANDARD", "VIP", "VAN"]).default("STANDARD"),
+  rideMode: z.enum(["PRIVATE", "CARPOOLING"]).default("PRIVATE"),
+
+  maxPassengers: z.number().optional(),
+});
 // ─────────────────────────────────────────────
 // Get Rides Query Schema
 // ─────────────────────────────────────────────
