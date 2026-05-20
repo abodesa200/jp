@@ -155,7 +155,7 @@ export async function cancelRideService(
         throw new BadRequestError("Cannot cancel completed ride");
     }
 
-    if (ride.status === "CANCELLED") {
+    if (ride.status === "CLIENT_CANCELLED") {
         throw new BadRequestError("Already cancelled");
     }
 

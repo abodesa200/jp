@@ -70,52 +70,11 @@ const navItems = [
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [collapsed, setCollapsed] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
 
-  useEffect(() => {
-    if (pathname === "/admin/login") {
-      setLoading(false);
-      return;
-    }
-
-    const token = localStorage.getItem("token");
-    const userStr = localStorage.getItem("user");
-
-    if (!token || !userStr) {
-      router.push("/admin/login");
-      return;
-    }
-
-    try {
-      const userData = JSON.parse(userStr);
-      if (userData.role !== "ADMIN") {
-        router.push("/admin/login");
-        return;
-      }
-      setUser(userData);
-      setIsAuthenticated(true);
-
-      // Fetch pending drivers count
-      fetch("/api/admin/drivers?isApproved=false&limit=1", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-        .then((r) => r.json())
-        .then((d) => {
-          setPendingCount(d.pagination?.total ?? 0);
-        })
-        .catch(() => { });
-    } catch {
-      router.push("/admin/login");
-      return;
-    } finally {
-      setLoading(false);
-    }
-  }, [pathname, router]);
-
+  
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -125,18 +84,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (pathname === "/admin/login") return <>{children}</>;
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          <p className="text-sm text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
 
-  if (!isAuthenticated) return null;
 
   const initials = user?.name
     ? user.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)

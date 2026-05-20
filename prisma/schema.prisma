@@ -8,7 +8,7 @@ datasource db {
 }
 
 // ─────────────────────────────────────────────
-// Enums
+// ENUMS
 // ─────────────────────────────────────────────
 
 enum Role {
@@ -18,13 +18,25 @@ enum Role {
   CUSTOMER_SUPPORT
 }
 
+enum DriverStatus {
+  OFFLINE
+  ONLINE
+  ON_TRIP
+  SUSPENDED
+}
+
 enum RideStatus {
   REQUESTED
   ACCEPTED
   DRIVER_ARRIVED
   IN_PROGRESS
   COMPLETED
-  CANCELLED
+
+  CLIENT_CANCELLED
+  DRIVER_CANCELLED
+
+  NO_DRIVER_FOUND
+  EXPIRED
 }
 
 enum PaymentStatus {
@@ -56,61 +68,74 @@ enum ServiceType {
   VAN
 }
 
-enum NegotiationStatus {
-  PENDING // الزبون بعث عرض، ما في رد
-  COUNTERED // السائق رد بعرض ثاني
-  ACCEPTED // تم الاتفاق
-  REJECTED // رُفض التفاوض
-  EXPIRED // انتهت المهلة
+enum TransactionType {
+  COMMISSION
+  PAYOUT
+  ADJUSTMENT
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
 }
 
 // ─────────────────────────────────────────────
-// User
+// USER
 // ─────────────────────────────────────────────
 
 model User {
   id         Int     @id @default(autoincrement())
   phone      String? @unique
+  email      String? @unique
+
   role       Role    @default(CLIENT)
   isVerified Boolean @default(false)
 
   name         String?
-  email        String? @unique
   avatarUrl    String?
-  passwordHash String? // للأدمن فقط
+  passwordHash String?
 
-  driver            Driver?
-  rides             Ride[]          @relation("ClientRides")
-  reviews           Review[]        @relation("ClientReviews")
+  driver Driver?
+
+  rides             Ride[] @relation("ClientRides")
+  reviews           Review[] @relation("ClientReviews")
   tickets           SupportTicket[]
-  carpoolPassengers RidePassenger[]
-
   notifications     Notification[]
-  settings          UserSettings?
   favoriteLocations FavoriteLocation[]
-  promoUsages       PromoCodeUsage[]
+  couponUsages      CouponUsage[]
+
+  carpoolPassengers RidePassenger[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  @@index([phone])
+  @@index([email])
 }
 
 // ─────────────────────────────────────────────
-// Driver
+// DRIVER
 // ─────────────────────────────────────────────
 
 model Driver {
   id     Int  @id @default(autoincrement())
   userId Int  @unique
-  user   User @relation(fields: [userId], references: [id])
+
+  user User @relation(fields: [userId], references: [id])
 
   licenseNumber String
   carModel      String
-  carPlate      String  @unique
-  carColor      String?
-  carYear       Int?
+  carPlate      String @unique
 
-  isApproved         Boolean   @default(false)
-  isOnline           Boolean   @default(false)
+  carColor String?
+  carYear  Int?
+
+  commissionRate Decimal @default(0.20)
+
+  isApproved Boolean      @default(false)
+  status     DriverStatus @default(OFFLINE)
+
   latitude           Float?
   longitude          Float?
   lastLocationUpdate DateTime?
@@ -118,95 +143,122 @@ model Driver {
   rating     Float @default(0)
   totalRides Int   @default(0)
 
+  wallet DriverWallet?
+
   rides   Ride[]
   reviews Review[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  @@index([status])
 }
 
 // ─────────────────────────────────────────────
-// Ride
+// RIDE
 // ─────────────────────────────────────────────
 
 model Ride {
-  id       Int      @id @default(autoincrement())
+  id       Int  @id @default(autoincrement())
   clientId Int
   driverId Int?
-  rideFlow RideFlow @default(NORMAL)
 
-  client User    @relation("ClientRides", fields: [clientId], references: [id])
+  client User @relation("ClientRides", fields: [clientId], references: [id])
   driver Driver? @relation(fields: [driverId], references: [id])
 
-  status   RideStatus @default(REQUESTED)
-  rideMode RideMode   @default(PRIVATE)
-
+  // State
+  status      RideStatus  @default(REQUESTED)
+  rideFlow    RideFlow    @default(NORMAL)
+  rideMode    RideMode    @default(PRIVATE)
   serviceType ServiceType @default(STANDARD)
 
   // Carpooling
-  maxPassengers  Int             @default(1) // 1 = standard, 2-4 = carpooling
-  availableSeats Int             @default(1)
-  passengers     RidePassenger[]
+  maxPassengers  Int @default(1)
+  availableSeats Int @default(1)
 
-  // Negotiation
-  systemFare  Float?
-  negotiation Negotiation?
+  passengers RidePassenger[]
 
-  clientOffer   Float?
-  pickupLat     Float
-  pickupLng     Float
-  pickupAddress String?
+  // Pricing
+  systemFare     Decimal?
+  clientOffer    Decimal?
+  negotiatedFare Decimal?
 
-  dropoffLat     Float
-  dropoffLng     Float
-  dropoffAddress String?
+  discountAmount Decimal? @default(0)
+  finalFare      Decimal?
 
-  fare     Float?
-  distance Float? // km
-  duration Int? // seconds
+  offerExpiresAt DateTime?
 
-  requestedAt  DateTime  @default(now())
-  acceptedAt   DateTime?
-  startedAt    DateTime?
-  completedAt  DateTime?
-  cancelledAt  DateTime?
+  // Location
+  pickupLat      Float
+  pickupLng      Float
+  pickupAddress  String?
+
+  dropoffLat      Float
+  dropoffLng      Float
+  dropoffAddress  String?
+
+  // Metrics
+  distance Float?
+  duration Int?
+
+  // Time tracking
+  requestedAt DateTime @default(now())
+  acceptedAt  DateTime?
+  startedAt   DateTime?
+  completedAt DateTime?
+  cancelledAt DateTime?
+
   cancelReason String?
 
+  // Relations
   payment Payment?
   review  Review?
 
+  couponUsage CouponUsage?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  @@index([clientId])
+  @@index([driverId])
+  @@index([status])
 }
 
 // ─────────────────────────────────────────────
-// Payment
+// PAYMENT
 // ─────────────────────────────────────────────
 
 model Payment {
-  id     Int  @id @default(autoincrement())
-  rideId Int  @unique
+  id Int @id @default(autoincrement())
+
+  rideId Int @unique
   ride   Ride @relation(fields: [rideId], references: [id])
 
-  amount        Float
-  method        PaymentMethod @default(CASH)
-  status        PaymentStatus @default(PENDING)
+  amount Decimal
+
+  method PaymentMethod @default(CASH)
+  status PaymentStatus @default(PENDING)
+
   transactionId String?
 
-  // للـ carpooling — دفع راكب معين (اختياري)
-  passengerId Int?           @unique
-  passenger   RidePassenger? @relation("PassengerPayment")
+  collectedByDriver Boolean  @default(false)
+  collectedAt       DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([status])
 }
 
 // ─────────────────────────────────────────────
-// Review
+// REVIEW
 // ─────────────────────────────────────────────
 
 model Review {
-  id       Int @id @default(autoincrement())
+  id Int @id @default(autoincrement())
+
   rideId   Int @unique
   clientId Int
   driverId Int
@@ -215,93 +267,155 @@ model Review {
   client User   @relation("ClientReviews", fields: [clientId], references: [id])
   driver Driver @relation(fields: [driverId], references: [id])
 
-  rating  Int
+  rating Int
   comment String?
 
   createdAt DateTime @default(now())
+
+  @@index([driverId])
 }
 
 // ─────────────────────────────────────────────
-// Support Ticket
+// DRIVER WALLET
 // ─────────────────────────────────────────────
 
-model SupportTicket {
-  id     Int  @id @default(autoincrement())
-  userId Int
-  user   User @relation(fields: [userId], references: [id])
+model DriverWallet {
+  id Int @id @default(autoincrement())
 
-  subject    String
-  message    String
-  isResolved Boolean @default(false)
+  driverId Int @unique
+  driver   Driver @relation(fields: [driverId], references: [id])
+
+  balance       Decimal @default(0)
+  totalEarned   Decimal @default(0)
+  totalDeducted Decimal @default(0)
+
+  transactions WalletTransaction[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
+model WalletTransaction {
+  id Int @id @default(autoincrement())
+
+  walletId Int
+  wallet   DriverWallet @relation(fields: [walletId], references: [id])
+
+  amount Decimal
+
+  type TransactionType
+
+  description String?
+  rideId      Int?
+
+  createdAt DateTime @default(now())
+
+  @@index([walletId])
+  @@index([rideId])
+}
+
 // ─────────────────────────────────────────────
-// Carpooling — Ride Passengers
+// COUPONS
+// ─────────────────────────────────────────────
+
+model Coupon {
+  id   Int    @id @default(autoincrement())
+  code String @unique
+
+  discountType  DiscountType
+  discountValue Decimal
+  maxDiscount   Decimal?
+
+  minFare Decimal?
+
+  usageLimit   Int?
+  usageCount   Int @default(0)
+  perUserLimit Int @default(1)
+
+  startsAt DateTime?
+  expiresAt DateTime?
+
+  isActive Boolean @default(true)
+
+  newUsersOnly Boolean @default(false)
+
+  usages CouponUsage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([code])
+}
+
+model CouponUsage {
+  id Int @id @default(autoincrement())
+
+  couponId Int
+  userId   Int
+  rideId   Int @unique
+
+  coupon Coupon @relation(fields: [couponId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+  ride   Ride   @relation(fields: [rideId], references: [id])
+
+  discountApplied Decimal
+
+  usedAt DateTime @default(now())
+
+  @@index([couponId])
+  @@index([userId])
+}
+
+// ─────────────────────────────────────────────
+// SUPPORT
+// ─────────────────────────────────────────────
+
+model SupportTicket {
+  id Int @id @default(autoincrement())
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
+  subject String
+  message String
+
+  isResolved Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// ─────────────────────────────────────────────
+// CARPOOL PASSENGERS
 // ─────────────────────────────────────────────
 
 model RidePassenger {
-  id       Int @id @default(autoincrement())
+  id Int @id @default(autoincrement())
+
   rideId   Int
   clientId Int
 
   ride   Ride @relation(fields: [rideId], references: [id])
   client User @relation(fields: [clientId], references: [id])
 
-  pickupLat     Float
-  pickupLng     Float
-  pickupAddress String?
+  pickupLat      Float
+  pickupLng      Float
+  pickupAddress  String?
 
-  dropoffLat     Float
-  dropoffLng     Float
-  dropoffAddress String?
+  dropoffLat      Float
+  dropoffLng      Float
+  dropoffAddress  String?
 
-  fare     Float? // حصة هاد الراكب من السعر
+  fare Decimal?
+
   joinedAt DateTime @default(now())
 
-  payment   Payment? @relation("PassengerPayment", fields: [paymentId], references: [id])
-  paymentId Int?     @unique
-
   @@unique([rideId, clientId])
-}
 
-// ─────────────────────────────────────────────
-// Negotiation — Price Negotiation
-// ─────────────────────────────────────────────
-
-model Negotiation {
-  id     Int  @id @default(autoincrement())
-  rideId Int  @unique
-  ride   Ride @relation(fields: [rideId], references: [id])
-
-  systemFare    Float // السعر الأصلي من النظام
-  clientOffer   Float // عرض الزبون
-  driverCounter Float? // رد السائق (اختياري)
-  agreedFare    Float? // السعر النهائي المتفق عليه
-
-  status    NegotiationStatus @default(PENDING)
-  expiresAt DateTime // مهلة الرد (مثلاً 2 دقيقة)
-
-  history NegotiationOffer[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-// سجل كل العروض في التفاوض
-model NegotiationOffer {
-  id            Int @id @default(autoincrement())
-  negotiationId Int
-
-  negotiation Negotiation @relation(fields: [negotiationId], references: [id])
-
-  offeredBy String // "CLIENT" أو "DRIVER"
-  amount    Float
-  message   String? // رسالة اختيارية مع العرض
-
-  createdAt DateTime @default(now())
+  @@index([rideId])
+  @@index([clientId])
 }
 
 // ─────────────────────────────────────────────
@@ -309,112 +423,64 @@ model NegotiationOffer {
 // ─────────────────────────────────────────────
 
 model OtpCode {
-  id    Int     @id @default(autoincrement())
+  id Int @id @default(autoincrement())
+
   phone String?
   email String?
 
-  code      String
+  code String
+
   expiresAt DateTime
-  used      Boolean  @default(false)
-  attempts  Int      @default(0)
+
+  used     Boolean @default(false)
+  attempts Int     @default(0)
+
+  purpose String?
 
   createdAt DateTime @default(now())
 
   @@index([email, used, expiresAt])
+  @@index([phone, used, expiresAt])
 }
 
 // ─────────────────────────────────────────────
-// Notification
+// NOTIFICATIONS
 // ─────────────────────────────────────────────
 
 model Notification {
-  id     Int  @id @default(autoincrement())
+  id Int @id @default(autoincrement())
+
   userId Int
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   title   String
   message String
-  isRead  Boolean @default(false)
+
+  isRead Boolean @default(false)
 
   createdAt DateTime @default(now())
 
   @@index([userId, isRead])
-  @@index([createdAt])
 }
 
 // ─────────────────────────────────────────────
-// User Settings
-// ─────────────────────────────────────────────
-
-model UserSettings {
-  id     Int  @id @default(autoincrement())
-  userId Int  @unique
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  language             String  @default("ar") // "ar" | "en"
-  notifyRideUpdates    Boolean @default(true)
-  notifyPromotions     Boolean @default(true)
-  notifySystemMessages Boolean @default(true)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-// ─────────────────────────────────────────────
-// Favorite Locations
+// FAVORITE LOCATIONS
 // ─────────────────────────────────────────────
 
 model FavoriteLocation {
-  id     Int  @id @default(autoincrement())
-  userId Int
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id Int @id @default(autoincrement())
 
-  name      String
-  address   String?
+  userId Int
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name String
+
+  address String?
+
   latitude  Float
   longitude Float
 
   createdAt DateTime @default(now())
 
-  @@index([userId])
-}
-
-// ─────────────────────────────────────────────
-// Promo Codes
-// ─────────────────────────────────────────────
-
-enum DiscountType {
-  PERCENTAGE
-  FIXED
-}
-
-model PromoCode {
-  id            Int          @id @default(autoincrement())
-  code          String       @unique
-  discountType  DiscountType
-  discountValue Float
-  expiresAt     DateTime?
-  maxUses       Int? // null = unlimited
-  currentUses   Int          @default(0)
-  isActive      Boolean      @default(true)
-
-  usages PromoCodeUsage[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model PromoCodeUsage {
-  id          Int  @id @default(autoincrement())
-  promoCodeId Int
-  userId      Int
-  rideId      Int?
-
-  promoCode PromoCode @relation(fields: [promoCodeId], references: [id])
-  user      User      @relation(fields: [userId], references: [id])
-
-  usedAt DateTime @default(now())
-
-  @@unique([promoCodeId, userId]) // كل مستخدم يستخدم الكود مرة واحدة
   @@index([userId])
 }

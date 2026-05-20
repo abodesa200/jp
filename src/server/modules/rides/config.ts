@@ -2,7 +2,7 @@ export const SERVICE_RULES = {
     STANDARD: {
       maxPassengers: 4,
       multiplier: 1,
-      allowCarpooling: false,
+      allowCarpooling: true,
     },
   
     VIP: {

@@ -4,13 +4,12 @@ import {
     NotFoundError,
     TooManyRequestsError,
 } from "@/server/core/http/http-errors";
-import { SignJWT } from "jose";
+import { jwtService } from "@/server/lib/auth/jwt";
+import { sendOtpEmail } from "./email.service";
 import { otpRepository } from "./otp.repository";
 import { SendOtpDTO, VerifyOtpDTO } from "./otp.schema";
-import { userRepository } from "./user.repository";
-import { sendOtpEmail } from "./email.service";
 import { generateOtpCode, getOtpExpiryDate, hashOtp } from "./otp.utils";
-import { jwtService } from "@/server/lib/auth/jwt";
+import { userRepository } from "./user.repository";
 
 const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
 
@@ -20,7 +19,10 @@ const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
 
 export async function sendOtpService(data: SendOtpDTO) {
     const { email, appContext } = data;
-
+    const purpose =
+        appContext === "driver"
+            ? "DRIVER_LOGIN"
+            : "CLIENT_LOGIN";
     // تحقق driver
     if (appContext === "driver") {
         const user = await userRepository.findByEmailWithDriver(email);
@@ -34,7 +36,7 @@ export async function sendOtpService(data: SendOtpDTO) {
         }
     }
 
-    const activeOtp = await otpRepository.findActiveOtp(email);
+    const activeOtp = await otpRepository.findActiveOtp(email, purpose);
 
     if (activeOtp) {
         const secondsLeft = Math.ceil(
@@ -51,7 +53,7 @@ export async function sendOtpService(data: SendOtpDTO) {
     const hashedCode = hashOtp(code);
     const expiresAt = getOtpExpiryDate();
 
-    await otpRepository.createOtp(email, hashedCode, expiresAt);
+    await otpRepository.createOtp(email, hashedCode, expiresAt, purpose);
     await sendOtpEmail(email, code);
 
     return {
@@ -67,7 +69,12 @@ export async function sendOtpService(data: SendOtpDTO) {
 export async function verifyOtpService(data: VerifyOtpDTO) {
     const { email, code, appContext } = data;
 
-    const otp = await otpRepository.findLatestOtp(email);
+    const purpose =
+        appContext === "driver"
+            ? "DRIVER_LOGIN"
+            : "CLIENT_LOGIN";
+
+    const otp = await otpRepository.findLatestOtp(email, purpose);
 
     if (!otp || otp.code !== hashOtp(code)) {
         throw new BadRequestError("Invalid or expired OTP");
@@ -100,7 +107,7 @@ export async function verifyOtpService(data: VerifyOtpDTO) {
         user = await userRepository.createClient(email);
     }
 
-   const token = await jwtService.sign({
+    const token = await jwtService.sign({
         id: user.id,
         role: user.role,
         isVerified: user.isVerified,

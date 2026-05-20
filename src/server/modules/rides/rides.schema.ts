@@ -34,6 +34,9 @@ export const createRideOpenApiSchema = z.object({
     description: "مطلوب فقط إذا rideFlow = NEGOTIATION",
     example: 12.5,
   }),
+
+  couponCode: z.string().optional(),
+
 }).openapi("CreateRideBody");
 
 export const createRideSchema = createRideOpenApiSchema.superRefine((data, ctx) => {

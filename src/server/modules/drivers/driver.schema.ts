@@ -22,7 +22,7 @@ export const updateDriverLocationSchema = z.object({
 // ─────────────────────────────────────────────
 
 export const updateDriverStatusSchema = z.object({
-    isOnline: z.boolean(),
+    status: z.enum(["ONLINE", "OFFLINE","ON_TRIP","SUSPENDED"]),
 });
 
 // ─────────────────────────────────────────────

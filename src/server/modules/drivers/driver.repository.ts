@@ -72,10 +72,12 @@ export const driverRepository = {
     /**
      * تحديث حالة السائق (online/offline)
      */
-    updateDriverStatus(userId: number, isOnline: boolean) {
+    updateDriverStatus(userId: number, status: "ONLINE" | "OFFLINE" | "ON_TRIP" | "SUSPENDED") {
         return prisma.driver.update({
             where: { userId },
-            data: { isOnline },
+            data: {
+                status: status,
+            },
         });
     },
 
@@ -91,7 +93,7 @@ export const driverRepository = {
         // جلب كل السائقين المتاحين
         const drivers = await prisma.driver.findMany({
             where: {
-                isOnline: true,
+                status: "ONLINE",
                 isApproved: true,
                 latitude: { not: null },
                 longitude: { not: null },

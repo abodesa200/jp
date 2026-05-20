@@ -8,11 +8,12 @@ export const otpRepository = {
   /**
    * البحث عن OTP نشط (غير مستخدم وغير منتهي الصلاحية)
    */
-  findActiveOtp(email: string) {
+  findActiveOtp(email: string,purpose: string) {
     return prisma.otpCode.findFirst({
       where: {
         email,
         used: false,
+        purpose,
         expiresAt: { gt: new Date() },
       },
     });
@@ -21,10 +22,12 @@ export const otpRepository = {
   /**
    * إنشاء OTP جديد
    */
-  createOtp(email: string, hashedCode: string, expiresAt: Date) {
+  createOtp(email: string, hashedCode: string, expiresAt: Date,  purpose: string
+) {
     return prisma.otpCode.create({
       data: {
         email,
+          purpose,
         code: hashedCode,
         expiresAt,
       },
@@ -34,10 +37,11 @@ export const otpRepository = {
   /**
    * البحث عن آخر OTP نشط
    */
-  findLatestOtp(email: string) {
+  findLatestOtp(email: string,purpose: string) {
     return prisma.otpCode.findFirst({
       where: {
         email,
+        purpose,
         used: false,
         expiresAt: { gt: new Date() },
       },

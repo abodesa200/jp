@@ -36,6 +36,7 @@ export async function GET(req: NextRequest) {
 
         return NextResponse.json(result);
     } catch (error) {
+        console.log("Error in GET /api/drivers/nearby:", error);
         return handleApiError(error);
     }
 }

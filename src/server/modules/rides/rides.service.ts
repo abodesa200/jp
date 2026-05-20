@@ -1,3 +1,4 @@
+// rides.service.ts
 import {
     BadRequestError,
     ForbiddenError,
@@ -12,6 +13,7 @@ import {
     calculateFare,
     mapRide,
 } from "./rides.utils";
+import { prisma } from "@/lib/prisma";
 
 type Payload = {
     userId: number;
@@ -22,57 +24,163 @@ type Payload = {
 // Create Ride Service
 // ─────────────────────────────────────────────
 
-export async function createRideService(payload: Payload, data: CreateRideDTO) {
+export async function createRideService(
+    payload: Payload,
+    data: CreateRideDTO
+) {
     if (payload.role !== "CLIENT") {
-      throw new ForbiddenError("Only clients can request rides");
+        throw new ForbiddenError("Only clients can request rides");
     }
-  
+
     const {
-      pickupLat,
-      pickupLng,
-      dropoffLat,
-      dropoffLng,
-      serviceType,
-      rideMode,
+        pickupLat,
+        pickupLng,
+        dropoffLat,
+        dropoffLng,
+        serviceType,
+        rideMode,
+        rideFlow,
+        couponCode,
+        clientOffer,
+        maxPassengers,
+        ...rest
     } = data;
-  
+
+    // ─────────────────────────────
+    // 1. Calculate base pricing
+    // ─────────────────────────────
+
     const distance = calculateDistance(
-      pickupLat,
-      pickupLng,
-      dropoffLat,
-      dropoffLng
+        pickupLat,
+        pickupLng,
+        dropoffLat,
+        dropoffLng
     );
-  
-    const systemFare = calculateFare(
-      distance,
-      serviceType,
-      rideMode
-    );
-  
+
+    const systemFare = calculateFare(distance, serviceType, rideMode);
     const estimatedDuration = calculateEstimatedDuration(distance);
-  
+
+    let discountAmount = 0;
+    let couponUsageData: null | {
+        couponId: number;
+        discountApplied: number;
+    } = null;
+
+    // ─────────────────────────────
+    // 2. Apply coupon (if exists)
+    // ─────────────────────────────
+
+    if (couponCode) {
+        const coupon = await prisma.coupon.findUnique({
+            where: { code: couponCode },
+        });
+
+        if (!coupon || !coupon.isActive) {
+            throw new BadRequestError("Invalid coupon");
+        }
+
+        const now = new Date();
+
+        if (coupon.startsAt && coupon.startsAt > now) {
+            throw new BadRequestError("Coupon not active yet");
+        }
+
+        if (coupon.expiresAt && coupon.expiresAt < now) {
+            throw new BadRequestError("Coupon expired");
+        }
+
+        if (coupon.minFare && systemFare < Number(coupon.minFare)) {
+            throw new BadRequestError("Ride does not meet minimum fare");
+        }
+
+        // ───── calculate discount
+        if (coupon.discountType === "PERCENTAGE") {
+            discountAmount =
+                (systemFare * Number(coupon.discountValue)) / 100;
+
+            if (coupon.maxDiscount) {
+                discountAmount = Math.min(
+                    discountAmount,
+                    Number(coupon.maxDiscount)
+                );
+            }
+        } else {
+            discountAmount = Number(coupon.discountValue);
+        }
+
+        discountAmount = Math.min(discountAmount, systemFare);
+
+        couponUsageData = {
+            couponId: coupon.id,
+            discountApplied: discountAmount,
+        };
+    }
+
+    // ─────────────────────────────
+    // 3. Final fare
+    // ─────────────────────────────
+
+    const finalFare = systemFare - discountAmount;
+
+    // ─────────────────────────────
+    // 4. Create ride
+    // ─────────────────────────────
+
     const ride = await ridesRepository.createRide(payload.userId, {
-      ...data,
-      distance,
-      systemFare,
-      estimatedDuration,
+        ...rest,
+        pickupLat,
+        pickupLng,
+        dropoffLat,
+        dropoffLng,
+        serviceType,
+        rideMode,
+        rideFlow,
+        clientOffer,
+        maxPassengers,
+        // ensure required field for repository
+        availableSeats: typeof maxPassengers === 'number' ? maxPassengers : 1,
+
+        distance,
+        systemFare,
+        duration: estimatedDuration,
+        discountAmount,
+        finalFare,
     });
-  
+
+    // ─────────────────────────────
+    // 5. Save coupon usage (after ride created)
+    // ─────────────────────────────
+
+    if (couponUsageData) {
+        await prisma.couponUsage.create({
+            data: {
+                couponId: couponUsageData.couponId,
+                userId: payload.userId,
+                rideId: ride.id,
+                discountApplied: couponUsageData.discountApplied,
+            },
+        });
+    }
+
+    // ─────────────────────────────
+    // 6. Emit event
+    // ─────────────────────────────
+
     emitSocketEvent("drivers", "ride:created", {
-      ride: mapRide(ride),
+        ride: mapRide(ride),
     });
-  
+
     return {
-      ride: mapRide(ride),
+        ride: mapRide(ride),
     };
-  }
+}
 // ─────────────────────────────────────────────
 // Get User Rides Service
 // ─────────────────────────────────────────────
 
 export async function getUserRidesService(
     payload: Payload,
-    query: GetRidesQueryDTO
+    query: GetRidesQueryDTO,
 ) {
     const { rides, total } = await ridesRepository.getUserRides(payload.userId, query);
 
@@ -93,7 +201,7 @@ export async function getUserRidesService(
 
 export async function getNearbyRidesService(
     payload: Payload,
-    query: GetNearbyRidesQueryDTO
+    query: GetNearbyRidesQueryDTO,
 ) {
     if (payload.role !== "DRIVER") {
         throw new ForbiddenError("Only drivers can view nearby rides");
@@ -111,25 +219,22 @@ export async function getNearbyRidesService(
 
     if (!driver.latitude || !driver.longitude) {
         throw new BadRequestError(
-            "Driver location not available. Please update your location."
+            "Driver location not available. Please update your location.",
         );
     }
 
     const { maxDistance, limit } = query;
 
-    // جلب الرحلات المتاحة (REQUESTED فقط)
     const availableRides = await ridesRepository.getAvailableRides();
 
-    // حساب المسافة وفلترة
     const ridesWithDistance = availableRides
         .map((ride) => {
             const distance = calculateDistance(
                 driver.latitude!,
                 driver.longitude!,
                 ride.pickupLat,
-                ride.pickupLng
+                ride.pickupLng,
             );
-
             return {
                 ...ride,
                 distanceFromDriver: parseFloat(distance.toFixed(2)),
@@ -167,20 +272,13 @@ export async function getRideDetailsService(payload: Payload, rideId: string) {
     const isAdmin = payload.role === "ADMIN";
     const isDriver = payload.role === "DRIVER";
 
-    // -------------------------
-    // CLIENT + ADMIN
-    // -------------------------
     if (isClient || isAdmin) {
         return { ride };
     }
 
-    // -------------------------
-    // DRIVER LOGIC
-    // -------------------------
     if (isDriver) {
         const canAccess =
-            ride.status === "REQUESTED" ||
-            ride.driver?.userId === payload.userId;
+            ride.status === "REQUESTED" || ride.driver?.userId === payload.userId;
 
         if (!canAccess) {
             throw new ForbiddenError("You don't have access to this ride");
@@ -189,8 +287,5 @@ export async function getRideDetailsService(payload: Payload, rideId: string) {
         return { ride };
     }
 
-    // -------------------------
-    // FALLBACK
-    // -------------------------
     throw new ForbiddenError("You don't have access to this ride");
 }

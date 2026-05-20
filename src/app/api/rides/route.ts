@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
       data: result,
     });
   } catch (error) {
-
+    console.error("Error in POST /api/rides:", error);
     return handleApiError(error);
   }
 }

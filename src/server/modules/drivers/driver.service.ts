@@ -101,7 +101,7 @@ export async function updateDriverStatusService(
 
     const updatedDriver = await driverRepository.updateDriverStatus(
         payload.userId,
-        data.isOnline
+        data.status
     );
 
     return updatedDriver;

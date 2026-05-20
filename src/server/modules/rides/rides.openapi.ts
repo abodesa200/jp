@@ -1,10 +1,7 @@
 import { registry } from '@/server/lib/openapi/registry'
-import { applyPromoSchema } from '@/services/promo/promo.schema'
 import { z } from 'zod'
 import { availableCarpoolingQuerySchema, joinCarpoolingSchema } from './carpooling/carpooling.schema'
 import { rideHistoryQuerySchema } from './history/history.schema'
-import { negotiateRideSchema, respondToNegotiationSchema } from './negotiation/negotiation.schema'
-import { createPaymentSchema, updatePaymentSchema } from './payment/payment.schema'
 import { createReviewSchema, getReviewsQuerySchema } from './reviews/reviews.schema'
 import { calculateRidePriceSchema, createRideOpenApiSchema, getNearbyRidesQuerySchema, getRidesQuerySchema } from './rides.schema'
 import { cancelRideSchema, updateRideStatusSchema } from './status/status.schema'
@@ -14,10 +11,6 @@ const rideIdParams = z.object({ id: z.string() })
 // ═════════════════════════════════════════════
 // CLIENT ENDPOINTS
 // ═════════════════════════════════════════════
-
-// ─────────────────────────────────────────────
-// [CLIENT] POST /api/rides - Create a new ride
-// ─────────────────────────────────────────────
 
 registry.registerPath({
     method: 'post',
@@ -33,39 +26,17 @@ registry.registerPath({
             },
         },
     },
-    // responses: {
-    //     201: {
-    //         description: 'Ride created successfully',
-    //         content: {
-    //             'application/json': {
-    //                 schema: z.object({        // ← هاد الجديد
-    //                     success: z.boolean().openapi({ example: true }),
-    //                     data: z.object({
-    //                         id: z.string().openapi({ example: "clx1ride456" }),
-    //                         status: z.string().openapi({ example: "PENDING" }),
-    //                     }),
-    //                 }),
-    //             },
-    //         },
-    //     },
-    //     400: { description: 'Validation error' },
-    //     401: { description: 'Unauthorized' },
-    // },
     responses: {
         201: {
             description: 'Ride created successfully',
             content: {
                 'application/json': {
-                    schema: createRideOpenApiSchema, // ← يستاهل
+                    schema: createRideOpenApiSchema,
                 },
             },
         },
-    }
-});
-
-// ─────────────────────────────────────────────
-// [CLIENT] GET /api/rides - Get my rides
-// ─────────────────────────────────────────────
+    },
+})
 
 registry.registerPath({
     method: 'get',
@@ -91,57 +62,34 @@ registry.registerPath({
     },
 })
 
-
-// ─────────────────────────────────────────────
-// [CLIENT] POST /api/rides/calculate-price
-// ─────────────────────────────────────────────
-
 registry.registerPath({
-    method: "post",
-
-    path: "/api/rides/calculate-price",
-
-    tags: ["Rides – Client"],
-
-    summary: "Calculate estimated ride price",
-
+    method: 'post',
+    path: '/api/rides/calculate-price',
+    tags: ['Rides – Client'],
+    summary: 'Calculate estimated ride price',
     request: {
         body: {
             content: {
-                "application/json": {
+                'application/json': {
                     schema: calculateRidePriceSchema,
                 },
             },
         },
     },
-
     responses: {
         200: {
-            description: "Ride price calculated successfully",
-
+            description: 'Ride price calculated successfully',
             content: {
-                "application/json": {
+                'application/json': {
                     schema: calculateRidePriceSchema,
                 },
             },
         },
-
-        400: {
-            description: "Validation error",
-        },
-
-        401: {
-            description: "Unauthorized",
-        },
-
-        403: {
-            description: "Only clients can calculate price",
-        },
+        400: { description: 'Validation error' },
+        401: { description: 'Unauthorized' },
+        403: { description: 'Only clients can calculate price' },
     },
 })
-// ─────────────────────────────────────────────
-// [CLIENT] GET /api/rides/history - Ride history with filters
-// ─────────────────────────────────────────────
 
 registry.registerPath({
     method: 'get',
@@ -157,27 +105,6 @@ registry.registerPath({
     },
 })
 
-// ─────────────────────────────────────────────
-// [CLIENT] GET /api/rides/export - Export ride history as CSV
-// ─────────────────────────────────────────────
-
-registry.registerPath({
-    method: 'get',
-    path: '/api/rides/export',
-    tags: ['Rides – Client'],
-    summary: 'Export ride history as a CSV file',
-    request: {
-        query: rideHistoryQuerySchema,
-    },
-    responses: {
-        200: { description: 'CSV file downloaded' },
-        401: { description: 'Unauthorized' },
-    },
-})
-
-// ─────────────────────────────────────────────
-// [CLIENT] GET /api/rides/carpooling/available - Browse available carpooling rides
-// ─────────────────────────────────────────────
 
 registry.registerPath({
     method: 'get',
@@ -194,10 +121,6 @@ registry.registerPath({
     },
 })
 
-// ─────────────────────────────────────────────
-// [CLIENT] GET /api/rides/reviews - Get my submitted reviews
-// ─────────────────────────────────────────────
-
 registry.registerPath({
     method: 'get',
     path: '/api/rides/reviews',
@@ -211,10 +134,6 @@ registry.registerPath({
         401: { description: 'Unauthorized' },
     },
 })
-
-// ─────────────────────────────────────────────
-// [CLIENT] GET /api/rides/{id} - Get ride details
-// ─────────────────────────────────────────────
 
 registry.registerPath({
     method: 'get',
@@ -231,10 +150,6 @@ registry.registerPath({
         404: { description: 'Ride not found' },
     },
 })
-
-// ─────────────────────────────────────────────
-// [CLIENT] POST /api/rides/{id}/cancel - Cancel a ride
-// ─────────────────────────────────────────────
 
 registry.registerPath({
     method: 'post',
@@ -259,10 +174,6 @@ registry.registerPath({
     },
 })
 
-// ─────────────────────────────────────────────
-// [CLIENT] POST /api/rides/{id}/join - Join a carpooling ride
-// ─────────────────────────────────────────────
-
 registry.registerPath({
     method: 'post',
     path: '/api/rides/{id}/join',
@@ -286,10 +197,6 @@ registry.registerPath({
     },
 })
 
-// ─────────────────────────────────────────────
-// [CLIENT] DELETE /api/rides/{id}/leave - Leave a carpooling ride
-// ─────────────────────────────────────────────
-
 registry.registerPath({
     method: 'delete',
     path: '/api/rides/{id}/leave',
@@ -305,136 +212,8 @@ registry.registerPath({
     },
 })
 
-// ─────────────────────────────────────────────
-// [CLIENT] POST /api/rides/{id}/negotiate - Start or counter a price negotiation
-// ─────────────────────────────────────────────
 
-registry.registerPath({
-    method: 'post',
-    path: '/api/rides/{id}/negotiate',
-    tags: ['Rides – Client'],
-    summary: 'Start a price negotiation or send a counter offer',
-    request: {
-        params: rideIdParams,
-        body: {
-            content: {
-                'application/json': {
-                    schema: negotiateRideSchema,
-                },
-            },
-        },
-    },
-    responses: {
-        200: { description: 'Negotiation started or counter offer sent' },
-        400: { description: 'Validation error' },
-        401: { description: 'Unauthorized' },
-        404: { description: 'Ride not found' },
-    },
-})
 
-// ─────────────────────────────────────────────
-// [CLIENT] PATCH /api/rides/{id}/negotiate - Accept or reject a negotiation
-// ─────────────────────────────────────────────
-
-registry.registerPath({
-    method: 'patch',
-    path: '/api/rides/{id}/negotiate',
-    tags: ['Rides – Client'],
-    summary: 'Accept or reject a price negotiation offer',
-    request: {
-        params: rideIdParams,
-        body: {
-            content: {
-                'application/json': {
-                    schema: respondToNegotiationSchema,
-                },
-            },
-        },
-    },
-    responses: {
-        200: { description: 'Negotiation accepted or rejected' },
-        400: { description: 'Validation error' },
-        401: { description: 'Unauthorized' },
-        404: { description: 'Negotiation not found' },
-    },
-})
-
-// ─────────────────────────────────────────────
-// [CLIENT] POST /api/rides/{id}/apply-promo - Apply a promo code
-// ─────────────────────────────────────────────
-
-registry.registerPath({
-    method: 'post',
-    path: '/api/rides/{id}/apply-promo',
-    tags: ['Rides – Client'],
-    summary: 'Apply a promo code to a ride',
-    request: {
-        params: rideIdParams,
-        body: {
-            content: {
-                'application/json': {
-                    schema: applyPromoSchema,
-                },
-            },
-        },
-    },
-    responses: {
-        200: { description: 'Promo code applied successfully' },
-        400: { description: 'Invalid or expired promo code' },
-        401: { description: 'Unauthorized' },
-        404: { description: 'Ride not found' },
-    },
-})
-
-// ─────────────────────────────────────────────
-// [CLIENT] POST /api/rides/{id}/payment - Create payment for a ride
-// ─────────────────────────────────────────────
-
-registry.registerPath({
-    method: 'post',
-    path: '/api/rides/{id}/payment',
-    tags: ['Rides – Client'],
-    summary: 'Create a payment record for a completed ride',
-    request: {
-        params: rideIdParams,
-        body: {
-            content: {
-                'application/json': {
-                    schema: createPaymentSchema,
-                },
-            },
-        },
-    },
-    responses: {
-        201: { description: 'Payment created successfully' },
-        400: { description: 'Validation error' },
-        401: { description: 'Unauthorized' },
-        404: { description: 'Ride not found' },
-    },
-})
-
-// ─────────────────────────────────────────────
-// [CLIENT] GET /api/rides/{id}/payment - Get ride payment details
-// ─────────────────────────────────────────────
-
-registry.registerPath({
-    method: 'get',
-    path: '/api/rides/{id}/payment',
-    tags: ['Rides – Client'],
-    summary: 'Get payment details for a specific ride',
-    request: {
-        params: rideIdParams,
-    },
-    responses: {
-        200: { description: 'Payment details retrieved successfully' },
-        401: { description: 'Unauthorized' },
-        404: { description: 'Payment not found' },
-    },
-})
-
-// ─────────────────────────────────────────────
-// [CLIENT] POST /api/rides/{id}/review - Submit a review
-// ─────────────────────────────────────────────
 
 registry.registerPath({
     method: 'post',
@@ -460,10 +239,6 @@ registry.registerPath({
     },
 })
 
-// ─────────────────────────────────────────────
-// [CLIENT] GET /api/rides/{id}/review - Get review for a ride
-// ─────────────────────────────────────────────
-
 registry.registerPath({
     method: 'get',
     path: '/api/rides/{id}/review',
@@ -483,10 +258,6 @@ registry.registerPath({
 // DRIVER ENDPOINTS
 // ═════════════════════════════════════════════
 
-// ─────────────────────────────────────────────
-// [DRIVER] GET /api/rides/nearby - Get nearby ride requests
-// ─────────────────────────────────────────────
-
 registry.registerPath({
     method: 'get',
     path: '/api/rides/nearby',
@@ -501,10 +272,6 @@ registry.registerPath({
         403: { description: 'Forbidden – only drivers can access this endpoint' },
     },
 })
-
-// ─────────────────────────────────────────────
-// [DRIVER] POST /api/rides/{id}/accept - Accept a ride request
-// ─────────────────────────────────────────────
 
 registry.registerPath({
     method: 'post',
@@ -522,10 +289,6 @@ registry.registerPath({
         409: { description: 'Ride already accepted by another driver' },
     },
 })
-
-// ─────────────────────────────────────────────
-// [DRIVER] PATCH /api/rides/{id} - Update ride status
-// ─────────────────────────────────────────────
 
 registry.registerPath({
     method: 'patch',
@@ -551,10 +314,6 @@ registry.registerPath({
     },
 })
 
-// ─────────────────────────────────────────────
-// [DRIVER] GET /api/rides/{id}/passengers - Get carpooling passengers
-// ─────────────────────────────────────────────
-
 registry.registerPath({
     method: 'get',
     path: '/api/rides/{id}/passengers',
@@ -571,30 +330,23 @@ registry.registerPath({
     },
 })
 
-// ─────────────────────────────────────────────
-// [DRIVER] PATCH /api/rides/{id}/payment - Update payment status
-// ─────────────────────────────────────────────
+
+
+// بعد DRIVER endpoints ضيف هاد:
 
 registry.registerPath({
-    method: 'patch',
-    path: '/api/rides/{id}/payment',
+    method: 'post',
+    path: '/api/rides/{id}/complete',
     tags: ['Rides – Driver'],
-    summary: 'Update payment status after receiving payment',
+    summary: 'Complete a ride and confirm cash payment received',
     request: {
         params: rideIdParams,
-        body: {
-            content: {
-                'application/json': {
-                    schema: updatePaymentSchema,
-                },
-            },
-        },
     },
     responses: {
-        200: { description: 'Payment status updated successfully' },
-        400: { description: 'Validation error' },
+        200: { description: 'Ride completed and payment confirmed' },
         401: { description: 'Unauthorized' },
-        403: { description: 'Forbidden – only the assigned driver can update payment' },
-        404: { description: 'Payment not found' },
+        403: { description: 'Forbidden – only the assigned driver can complete the ride' },
+        404: { description: 'Ride not found' },
+        409: { description: 'Ride is not in progress' },
     },
 })

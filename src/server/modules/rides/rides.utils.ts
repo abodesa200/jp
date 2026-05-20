@@ -1,8 +1,9 @@
+// rides.utils.ts
+import { Ride } from "@/generated/prisma/client";
+
 // ─────────────────────────────────────────────
 // Distance Calculation (Haversine Formula)
 // ─────────────────────────────────────────────
-
-import { Ride } from "@/generated/prisma/client";
 
 export function calculateDistance(
   lat1: number,
@@ -10,15 +11,15 @@ export function calculateDistance(
   lat2: number,
   lng2: number,
 ): number {
-  const R = 6371; // نصف قطر الأرض بالكيلومتر
+  const R = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLng = ((lng2 - lng1) * Math.PI) / 180;
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLng / 2) *
-      Math.sin(dLng / 2);
+    Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLng / 2) *
+    Math.sin(dLng / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
@@ -60,8 +61,8 @@ export function calculateFare(
 // ─────────────────────────────────────────────
 
 export function calculateEstimatedDuration(distanceKm: number): number {
-  const averageSpeed = 40; // km/h
-  return Math.ceil((distanceKm / averageSpeed) * 60); // minutes
+  const averageSpeed = 40;
+  return Math.ceil((distanceKm / averageSpeed) * 60);
 }
 
 // ─────────────────────────────────────────────
@@ -72,24 +73,29 @@ export function mapRide(ride: Ride) {
   return {
     id: ride.id,
     status: ride.status,
+    rideFlow: ride.rideFlow,
+    rideMode: ride.rideMode,
+    serviceType: ride.serviceType,
 
     pickup: {
       lat: ride.pickupLat,
       lng: ride.pickupLng,
       address: ride.pickupAddress,
     },
-
     dropoff: {
       lat: ride.dropoffLat,
       lng: ride.dropoffLng,
       address: ride.dropoffAddress,
     },
 
+    // Pricing
     systemFare: ride.systemFare,
+    clientOffer: ride.clientOffer,
+    discountAmount: ride.discountAmount,
+    finalFare: ride.finalFare,
+
     distance: ride.distance,
     estimatedDuration: ride.duration,
-    serviceType: ride.serviceType,
-    rideMode: ride.rideMode,
     requestedAt: ride.requestedAt,
   };
 }

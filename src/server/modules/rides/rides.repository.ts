@@ -1,5 +1,7 @@
+// rides.repository.ts
 import { prisma } from "@/lib/prisma";
 import { CreateRideDTO, GetRidesQueryDTO } from "./rides.schema";
+import { RideFlow, RideMode, ServiceType } from "@/generated/prisma/enums";
 
 // ─────────────────────────────────────────────
 // Create Ride
@@ -7,32 +9,59 @@ import { CreateRideDTO, GetRidesQueryDTO } from "./rides.schema";
 
 export async function createRide(
   clientId: number,
-  data: CreateRideDTO & {
-    distance: number;
+  data: {
+    pickupLat: number;
+    pickupLng: number;
+    pickupAddress?: string;
+    dropoffLat: number;
+    dropoffLng: number;
+    dropoffAddress?: string;
+
+    rideMode: RideMode;
+    rideFlow: RideFlow;
+    serviceType: ServiceType;
+
+    maxPassengers: number;
+    availableSeats: number;
+
     systemFare: number;
-    estimatedDuration: number;
-  },
+    finalFare: number;
+    discountAmount: number;
+
+    distance: number;
+    duration: number;
+
+    clientOffer?: number;
+  }
 ) {
   return prisma.ride.create({
     data: {
       clientId,
+
       pickupLat: data.pickupLat,
       pickupLng: data.pickupLng,
       pickupAddress: data.pickupAddress,
+
       dropoffLat: data.dropoffLat,
       dropoffLng: data.dropoffLng,
       dropoffAddress: data.dropoffAddress,
+
       rideMode: data.rideMode,
-      serviceType: data.serviceType,
       rideFlow: data.rideFlow,
-      clientOffer: data.clientOffer,
+      serviceType: data.serviceType,
 
       maxPassengers: data.maxPassengers,
-      availableSeats: data.maxPassengers,
-      systemFare: data.systemFare,
-      distance: data.distance,
+      availableSeats: data.availableSeats,
 
-      duration: data.estimatedDuration,
+      systemFare: data.systemFare,
+      finalFare: data.finalFare,
+      discountAmount: data.discountAmount,
+
+      distance: data.distance,
+      duration: data.duration,
+
+      clientOffer: data.clientOffer,
+
       status: "REQUESTED",
     },
   });
@@ -76,13 +105,6 @@ export async function findRideWithDetails(rideId: number) {
           },
         },
       },
-      negotiation: {
-        include: {
-          history: {
-            orderBy: { createdAt: "asc" },
-          },
-        },
-      },
       passengers: {
         include: {
           client: {
@@ -95,6 +117,7 @@ export async function findRideWithDetails(rideId: number) {
           },
         },
       },
+      couponUsage: true,
       payment: true,
       review: true,
     },
@@ -158,14 +181,6 @@ export async function getAvailableRides() {
           name: true,
           phone: true,
           avatarUrl: true,
-        },
-      },
-      negotiation: {
-        select: {
-          status: true,
-          clientOffer: true,
-          driverCounter: true,
-          agreedFare: true,
         },
       },
     },
