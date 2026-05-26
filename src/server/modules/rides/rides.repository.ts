@@ -1,7 +1,7 @@
 // rides.repository.ts
-import { prisma } from "@/lib/prisma";
-import { CreateRideDTO, GetRidesQueryDTO } from "./rides.schema";
 import { RideFlow, RideMode, ServiceType } from "@/generated/prisma/enums";
+import { prisma } from "@/lib/prisma";
+import { GetRidesQueryDTO } from "./rides.schema";
 
 // ─────────────────────────────────────────────
 // Create Ride
