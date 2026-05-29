@@ -11,9 +11,10 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const payload = await verifyToken(req);
 
   try {
+    const payload = await verifyToken(req);
+
     const { id } = await params;
     const result = await acceptRideService(payload, id);
 

@@ -12,14 +12,19 @@
     "start": "next start",
     "start:socket": "node socket-server.js",
     "lint": "eslint",
+    "seed": "tsx prisma/seed.ts",
     "create-admin": "tsx src/scripts/create-admin.ts",
     "create-test-users": "tsx src/scripts/create-test-users.ts",
     "test:auth": "tsx test-auth-api.ts",
     "gen:api": "node generate-openapi.mjs --app-dir ./src/app --out ./docs/openapi.json",
     "test:auth:interactive": "tsx test-auth-api.ts --interactive"
   },
+   "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^8.5.0",
+    "@faker-js/faker": "^10.4.0",
     "@prisma/adapter-pg": "^7.7.0",
     "@prisma/client": "^7.7.0",
     "@react-google-maps/api": "^2.20.8",

@@ -1,4 +1,5 @@
 // rides.service.ts
+import { prisma } from "@/lib/prisma";
 import {
     BadRequestError,
     ForbiddenError,
@@ -13,7 +14,6 @@ import {
     calculateFare,
     mapRide,
 } from "./rides.utils";
-import { prisma } from "@/lib/prisma";
 
 type Payload = {
     userId: number;
