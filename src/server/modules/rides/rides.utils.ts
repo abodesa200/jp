@@ -57,6 +57,66 @@ export function calculateFare(
 }
 
 // ─────────────────────────────────────────────
+// ML Model Fare Prediction
+// ─────────────────────────────────────────────
+
+const ML_API_URL =
+  process.env.FARE_MODEL_URL ?? "http://127.0.0.1:5000/predict";
+
+export async function fetchFareFromModel(params: {
+  pickupLat: number;
+  pickupLng: number;
+  dropoffLat: number;
+  dropoffLng: number;
+  distance: number;
+  serviceType: "STANDARD" | "VIP" | "VAN";
+  rideMode: "PRIVATE" | "CARPOOLING";
+}): Promise<number> {
+  const now = new Date();
+
+  const features = {
+    pickup_latitude: params.pickupLat,
+    pickup_longitude: params.pickupLng,
+    dropoff_latitude: params.dropoffLat,
+    dropoff_longitude: params.dropoffLng,
+    distance: params.distance,
+    pickup_hour: now.getHours(),
+    pickup_day: now.getDate(),
+    pickup_month: now.getMonth() + 1,
+    pickup_dayofweek: now.getDay(),
+  };
+
+  try {
+    const res = await fetch(ML_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify([features]),
+      signal: AbortSignal.timeout(5000), // 5s timeout
+    });
+
+    if (!res.ok) throw new Error(`Model API returned ${res.status}`);
+
+    const predictions: number[] = await res.json();
+    const baseFare = predictions[0];
+
+    // apply serviceType & rideMode multipliers on top of model output
+    const serviceMultiplier = { STANDARD: 1, VIP: 2.2, VAN: 1.6 };
+    const modeMultiplier = { PRIVATE: 1, CARPOOLING: 0.7 };
+
+    const fare =
+      baseFare *
+      serviceMultiplier[params.serviceType] *
+      modeMultiplier[params.rideMode];
+
+    return Math.max(parseFloat(fare.toFixed(2)), 5);
+  } catch {
+    // fallback to rule-based calculation if model is unreachable
+    console.warn("[fare] ML model unreachable, falling back to rule-based fare");
+    return calculateFare(params.distance, params.serviceType, params.rideMode);
+  }
+}
+
+// ─────────────────────────────────────────────
 // Estimated Duration Calculation
 // ─────────────────────────────────────────────
 

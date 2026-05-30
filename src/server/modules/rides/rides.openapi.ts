@@ -63,6 +63,59 @@ registry.registerPath({
 })
 
 registry.registerPath({
+    method: 'get',
+    path: '/api/rides/check-coupon',
+    tags: ['Rides – Client'],
+    summary: 'Validate a coupon code and preview the discount',
+    description: [
+        'Two ways to call this endpoint:',
+        '- **Option A** – already have the fare: `?code=SAVE20&systemFare=12.50`',
+        '- **Option B** – send coordinates and let the server calculate the fare: `?code=SAVE20&pickupLat=...&pickupLng=...&dropoffLat=...&dropoffLng=...`',
+    ].join('\n'),
+    request: {
+        query: z.object({
+            code: z.string().openapi({ description: 'Coupon code', example: 'SAVE20' }),
+            systemFare: z.coerce.number().optional().openapi({ description: 'Fare from calculate-price (Option A)', example: 12.50 }),
+            pickupLat: z.coerce.number().optional().openapi({ description: 'Required if systemFare not provided (Option B)', example: 33.51 }),
+            pickupLng: z.coerce.number().optional().openapi({ example: 36.29 }),
+            dropoffLat: z.coerce.number().optional().openapi({ example: 33.52 }),
+            dropoffLng: z.coerce.number().optional().openapi({ example: 36.30 }),
+            serviceType: z.enum(['STANDARD', 'VIP', 'VAN']).optional().openapi({ example: 'STANDARD' }),
+            rideMode: z.enum(['PRIVATE', 'CARPOOLING']).optional().openapi({ example: 'PRIVATE' }),
+        }),
+    },
+    responses: {
+        200: {
+            description: 'Coupon is valid – returns discount details',
+            content: {
+                'application/json': {
+                    schema: z.object({
+                        success: z.boolean(),
+                        data: z.object({
+                            valid: z.boolean(),
+                            coupon: z.object({
+                                code: z.string(),
+                                discountType: z.enum(['PERCENTAGE', 'FIXED']),
+                                discountValue: z.number(),
+                                maxDiscount: z.number().nullable(),
+                            }),
+                            pricing: z.object({
+                                systemFare: z.number(),
+                                discountAmount: z.number(),
+                                finalFare: z.number(),
+                            }),
+                        }),
+                    }),
+                },
+            },
+        },
+        400: { description: 'Invalid, expired, or already used coupon' },
+        401: { description: 'Unauthorized' },
+        403: { description: 'Only clients can check coupons' },
+    },
+})
+
+registry.registerPath({
     method: 'post',
     path: '/api/rides/calculate-price',
     tags: ['Rides – Client'],

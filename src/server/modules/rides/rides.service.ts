@@ -11,7 +11,7 @@ import { CreateRideDTO, GetNearbyRidesQueryDTO, GetRidesQueryDTO } from "./rides
 import {
     calculateDistance,
     calculateEstimatedDuration,
-    calculateFare,
+    fetchFareFromModel,
     mapRide,
 } from "./rides.utils";
 
@@ -57,7 +57,15 @@ export async function createRideService(
         dropoffLng
     );
 
-    const systemFare = calculateFare(distance, serviceType, rideMode);
+    const systemFare = await fetchFareFromModel({
+        pickupLat,
+        pickupLng,
+        dropoffLat,
+        dropoffLng,
+        distance,
+        serviceType,
+        rideMode,
+    });
     const estimatedDuration = calculateEstimatedDuration(distance);
 
     let discountAmount = 0;
@@ -253,6 +261,101 @@ export async function getNearbyRidesService(
         filters: {
             maxDistance,
             limit,
+        },
+    };
+}
+
+// ─────────────────────────────────────────────
+// Check Coupon Service
+// ─────────────────────────────────────────────
+
+export async function checkCouponService(
+    payload: Payload,
+    code: string,
+    systemFare: number
+) {
+    if (payload.role !== "CLIENT") {
+        throw new ForbiddenError("Only clients can check coupons");
+    }
+
+    const coupon = await prisma.coupon.findUnique({
+        where: { code },
+        include: {
+            _count: { select: { usages: true } },
+        },
+    });
+
+    if (!coupon || !coupon.isActive) {
+        throw new BadRequestError("Invalid or inactive coupon");
+    }
+
+    const now = new Date();
+
+    if (coupon.startsAt && coupon.startsAt > now) {
+        throw new BadRequestError("Coupon not active yet");
+    }
+
+    if (coupon.expiresAt && coupon.expiresAt < now) {
+        throw new BadRequestError("Coupon has expired");
+    }
+
+    if (coupon.minFare && systemFare < Number(coupon.minFare)) {
+        throw new BadRequestError(
+            `Minimum fare for this coupon is ${coupon.minFare}`
+        );
+    }
+
+    // Check global usage limit
+    if (coupon.usageLimit && coupon._count.usages >= coupon.usageLimit) {
+        throw new BadRequestError("Coupon usage limit reached");
+    }
+
+    // Check per-user usage limit
+    const userUsageCount = await prisma.couponUsage.count({
+        where: { couponId: coupon.id, userId: payload.userId },
+    });
+
+    if (userUsageCount >= coupon.perUserLimit) {
+        throw new BadRequestError("You have already used this coupon");
+    }
+
+    // Check newUsersOnly
+    if (coupon.newUsersOnly) {
+        const previousRides = await prisma.ride.count({
+            where: { clientId: payload.userId },
+        });
+        if (previousRides > 0) {
+            throw new BadRequestError("This coupon is for new users only");
+        }
+    }
+
+    // Calculate discount
+    let discountAmount = 0;
+
+    if (coupon.discountType === "PERCENTAGE") {
+        discountAmount = (systemFare * Number(coupon.discountValue)) / 100;
+        if (coupon.maxDiscount) {
+            discountAmount = Math.min(discountAmount, Number(coupon.maxDiscount));
+        }
+    } else {
+        discountAmount = Number(coupon.discountValue);
+    }
+
+    discountAmount = Math.min(discountAmount, systemFare);
+    const finalFare = systemFare - discountAmount;
+
+    return {
+        valid: true,
+        coupon: {
+            code: coupon.code,
+            discountType: coupon.discountType,
+            discountValue: Number(coupon.discountValue),
+            maxDiscount: coupon.maxDiscount ? Number(coupon.maxDiscount) : null,
+        },
+        pricing: {
+            systemFare: parseFloat(systemFare.toFixed(2)),
+            discountAmount: parseFloat(discountAmount.toFixed(2)),
+            finalFare: parseFloat(finalFare.toFixed(2)),
         },
     };
 }
