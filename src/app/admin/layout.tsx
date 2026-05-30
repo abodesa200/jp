@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import {
   BarChart3,
   Bell,
+  Building2,
   Car,
   ChevronLeft,
   ChevronRight,
@@ -42,6 +43,7 @@ const navItems = [
       { href: "/admin/drivers", icon: Car, label: "Drivers" },
       { href: "/admin/pending-drivers", icon: Car, label: "Pending Drivers", badge: "pending" },
       { href: "/admin/rides", icon: MapPin, label: "Rides" },
+      { href: "/admin/departments", icon: Building2, label: "Departments" },
     ],
   },
   {

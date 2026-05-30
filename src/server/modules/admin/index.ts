@@ -29,3 +29,8 @@ export * from "./promo/promo.service";
 export * from "./stats/stats.repository";
 export * from "./stats/stats.service";
 
+// Departments
+export * from "../departments/departments.schema";
+export * from "../departments/departments.repository";
+export * from "../departments/departments.service";
+

@@ -4,7 +4,9 @@ import {
     NotFoundError,
 } from "@/server/core/http/http-errors";
 import { emitSocketEvent } from "@/server/lib/socket/emit";
-import { calculateDistance, calculateFare } from "../rides.utils";
+import { calculateDistance } from "../rides.utils";
+import { mapRide } from "../rides.utils";
+import { recalculateCarpoolFares } from "./carpooling.pricing";
 import * as carpoolingRepository from "./carpooling.repository";
 import {
     AvailableCarpoolingQueryDTO,
@@ -73,28 +75,46 @@ export async function joinCarpoolingService(
         data.dropoffLat,
         data.dropoffLng
     );
-    const fare = calculateFare(
-        distance,
-        ride.serviceType,
-        "CARPOOLING"
-    );
-    // Add passenger and decrement available seats in a transaction
+    void distance;
+
     const result = await carpoolingRepository.addPassenger(
         rideId,
         payload.userId,
         {
             ...data,
-            fare,
+            fare: 0,
         }
     );
 
-    // Notify driver and other passengers
+    const pricing = await recalculateCarpoolFares(rideId);
+
     emitSocketEvent(`ride:${rideId}`, "passenger:joined", {
         passenger: result,
         availableSeats: ride.availableSeats - 1,
+        pricing: pricing
+            ? {
+                  share: pricing.share,
+                  totalEarnings: pricing.totalEarnings,
+                  participantCount: pricing.participantCount,
+              }
+            : null,
     });
 
-    return result;
+    if (pricing) {
+        emitSocketEvent(`ride:${rideId}`, "carpool:fare_updated", {
+            rideId,
+            share: pricing.share,
+            totalEarnings: pricing.totalEarnings,
+            participantCount: pricing.participantCount,
+        });
+    }
+
+    return {
+        passenger: result,
+        fare: pricing?.share ?? 0,
+        totalEarnings: pricing?.totalEarnings ?? 0,
+        participantCount: pricing?.participantCount ?? 1,
+    };
 }
 
 // ─────────────────────────────────────────────
@@ -120,7 +140,7 @@ export async function leaveCarpoolingService(payload: Payload, rideId: number) {
     }
 
     // Validate ride hasn't started
-    if (["IN_PROGRESS", "COMPLETED", "CANCELLED"].includes(ride.status)) {
+    if (["IN_PROGRESS", "COMPLETED", "CLIENT_CANCELLED", "DRIVER_CANCELLED"].includes(ride.status)) {
         throw new ForbiddenError(
             "Cannot leave ride that has started or completed"
         );
@@ -129,15 +149,34 @@ export async function leaveCarpoolingService(payload: Payload, rideId: number) {
     // Remove passenger and increment available seats in a transaction
     await carpoolingRepository.removePassenger(rideId, payload.userId);
 
-    // Notify driver and other passengers
+    const pricing = await recalculateCarpoolFares(rideId);
+
     emitSocketEvent(`ride:${rideId}`, "passenger:left", {
         clientId: payload.userId,
         availableSeats: ride.availableSeats + 1,
+        pricing: pricing
+            ? {
+                  share: pricing.share,
+                  totalEarnings: pricing.totalEarnings,
+                  participantCount: pricing.participantCount,
+              }
+            : null,
     });
+
+    if (pricing) {
+        emitSocketEvent(`ride:${rideId}`, "carpool:fare_updated", {
+            rideId,
+            share: pricing.share,
+            totalEarnings: pricing.totalEarnings,
+            participantCount: pricing.participantCount,
+        });
+    }
 
     return {
         success: true,
         message: "Successfully left the ride",
+        fare: pricing?.share ?? 0,
+        totalEarnings: pricing?.totalEarnings ?? 0,
     };
 }
 
@@ -237,7 +276,10 @@ export async function getAvailableCarpoolingService(
         .slice(0, limit);
 
     return {
-        rides: nearbyRides,
+        rides: nearbyRides.map((ride) => ({
+            ...ride,
+            ...mapRide(ride),
+        })),
         total: nearbyRides.length,
     };
 }

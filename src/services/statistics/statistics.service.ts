@@ -63,7 +63,7 @@ export async function getRideStatisticsService(query: StatisticsQueryDTO) {
                 DATE(created_at) as date,
                 COUNT(*) as count,
                 SUM(CASE WHEN status = 'COMPLETED' THEN 1 ELSE 0 END) as completed,
-                SUM(CASE WHEN status = 'CANCELLED' THEN 1 ELSE 0 END) as cancelled
+                SUM(CASE WHEN status IN ('CLIENT_CANCELLED', 'DRIVER_CANCELLED') THEN 1 ELSE 0 END) as cancelled
             FROM "Ride"
             ${where.createdAt ? prisma.$queryRaw`WHERE created_at >= ${where.createdAt.gte} AND created_at <= ${where.createdAt.lte}` : prisma.$queryRaw``}
             GROUP BY DATE(created_at)
@@ -76,7 +76,8 @@ export async function getRideStatisticsService(query: StatisticsQueryDTO) {
         summary: {
             totalRides: ridesByStatus.reduce((sum, item) => sum + item._count.id, 0),
             completedRides: ridesByStatus.find((s) => s.status === "COMPLETED")?._count.id || 0,
-            cancelledRides: ridesByStatus.find((s) => s.status === "CANCELLED")?._count.id || 0,
+            cancelledRides: (ridesByStatus.find((s) => s.status === "CLIENT_CANCELLED")?._count.id || 0)
+                + (ridesByStatus.find((s) => s.status === "DRIVER_CANCELLED")?._count.id || 0),
             activeRides: ridesByStatus.find((s) => s.status === "IN_PROGRESS")?._count.id || 0,
         },
         byStatus: ridesByStatus.map((item) => ({

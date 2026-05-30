@@ -8,6 +8,8 @@ export const rideHistoryQuerySchema = z.object({
             "DRIVER_ARRIVED",
             "IN_PROGRESS",
             "COMPLETED",
+            "CLIENT_CANCELLED",
+            "DRIVER_CANCELLED",
             "CANCELLED",
         ])
         .optional(),

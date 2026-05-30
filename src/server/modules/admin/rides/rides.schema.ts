@@ -13,6 +13,8 @@ export const getRidesQuerySchema = z.object({
             "DRIVER_ARRIVED",
             "IN_PROGRESS",
             "COMPLETED",
+            "CLIENT_CANCELLED",
+            "DRIVER_CANCELLED",
             "CANCELLED",
         ])
         .optional()
@@ -39,6 +41,8 @@ export const updateRideSchema = z.object({
             "DRIVER_ARRIVED",
             "IN_PROGRESS",
             "COMPLETED",
+            "CLIENT_CANCELLED",
+            "DRIVER_CANCELLED",
             "CANCELLED",
         ])
         .optional(),

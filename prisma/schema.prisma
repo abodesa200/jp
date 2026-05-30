@@ -72,6 +72,7 @@ enum TransactionType {
   COMMISSION
   PAYOUT
   ADJUSTMENT
+  TIP
 }
 
 enum DiscountType {
@@ -187,6 +188,7 @@ model Ride {
   discountAmount Decimal? @default(0)
   finalFare      Decimal?
   tip            Decimal? @default(0)
+  tipSubmittedAt DateTime?
 
   offerExpiresAt DateTime?
 
@@ -484,4 +486,26 @@ model FavoriteLocation {
   createdAt DateTime @default(now())
 
   @@index([userId])
+}
+
+// ─────────────────────────────────────────────
+// DEPARTMENTS
+// ─────────────────────────────────────────────
+
+model Department {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  description String?
+
+  icon     String?
+  isActive Boolean @default(true)
+
+  order Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([order])
 }

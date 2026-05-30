@@ -3,7 +3,7 @@ import { z } from "zod";
 export const rideFilterSchema = z.object({
     page: z.number().min(1).default(1),
     limit: z.number().min(1).max(100).default(20),
-    status: z.enum(["REQUESTED", "ACCEPTED", "IN_PROGRESS", "COMPLETED", "CANCELLED"]).optional(),
+    status: z.enum(["REQUESTED", "ACCEPTED", "DRIVER_ARRIVED", "IN_PROGRESS", "COMPLETED", "CLIENT_CANCELLED", "DRIVER_CANCELLED", "CANCELLED"]).optional(),
     type: z.enum(["STANDARD", "CARPOOLING"]).optional(),
     search: z.string().optional(),
 });

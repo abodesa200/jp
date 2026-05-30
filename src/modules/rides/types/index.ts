@@ -35,9 +35,11 @@ export interface Ride {
 export type RideStatus =
     | "REQUESTED"
     | "ACCEPTED"
+    | "DRIVER_ARRIVED"
     | "IN_PROGRESS"
     | "COMPLETED"
-    | "CANCELLED";
+    | "CLIENT_CANCELLED"
+    | "DRIVER_CANCELLED";
 
 export type RideType = "STANDARD" | "CARPOOLING";
 

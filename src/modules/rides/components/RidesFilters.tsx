@@ -54,6 +54,7 @@ export function RidesFilters({
                                 <SelectItem value="all">All Statuses</SelectItem>
                                 <SelectItem value="REQUESTED">Requested</SelectItem>
                                 <SelectItem value="ACCEPTED">Accepted</SelectItem>
+                                <SelectItem value="DRIVER_ARRIVED">Driver Arrived</SelectItem>
                                 <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
                                 <SelectItem value="COMPLETED">Completed</SelectItem>
                                 <SelectItem value="CANCELLED">Cancelled</SelectItem>

@@ -1,5 +1,6 @@
 // rides.utils.ts
 import { Ride } from "@/generated/prisma/client";
+import { calculateCarpoolTotalEarnings } from "./carpooling/carpooling.pricing";
 
 // ─────────────────────────────────────────────
 // Distance Calculation (Haversine Formula)
@@ -237,7 +238,33 @@ export async function fetchDurationFromModel(params: {
 // Ride Mapper (DTO)
 // ─────────────────────────────────────────────
 
-export function mapRide(ride: Ride) {
+export function mapRide(
+  ride: Ride & {
+    passengers?: Array<{
+      id: number;
+      clientId: number;
+      fare: unknown;
+      client?: {
+        id: number;
+        name: string | null;
+        phone: string | null;
+        avatarUrl: string | null;
+      };
+    }>;
+  }
+) {
+  const passengers = ride.passengers ?? [];
+  const ownerShare = Number(ride.finalFare ?? ride.clientOffer ?? ride.systemFare ?? 0);
+  const isCarpooling = ride.rideMode === "CARPOOLING";
+
+  const totalFare = isCarpooling
+    ? calculateCarpoolTotalEarnings(ownerShare, passengers)
+    : Number(ride.finalFare ?? ride.clientOffer ?? ride.systemFare ?? 0);
+
+  const clientOffer = isCarpooling
+    ? totalFare
+    : Number(ride.clientOffer ?? ride.finalFare ?? ride.systemFare ?? 0);
+
   return {
     id: ride.id,
     status: ride.status,
@@ -256,14 +283,30 @@ export function mapRide(ride: Ride) {
       address: ride.dropoffAddress,
     },
 
-    // Pricing
-    systemFare: ride.systemFare,
-    clientOffer: ride.clientOffer,
-    discountAmount: ride.discountAmount,
-    finalFare: ride.finalFare,
+    fare: totalFare,
+    totalFare,
+    ownerShare,
+    systemFare: ride.systemFare != null ? Number(ride.systemFare) : null,
+    clientOffer,
+    discountAmount: ride.discountAmount != null ? Number(ride.discountAmount) : null,
+    finalFare: ride.finalFare != null ? Number(ride.finalFare) : null,
+
+    maxPassengers: ride.maxPassengers,
+    availableSeats: ride.availableSeats,
+    passengerCount: 1 + passengers.length,
+    passengers: passengers.map((passenger) => ({
+      id: passenger.id,
+      clientId: passenger.clientId,
+      fare: passenger.fare != null ? Number(passenger.fare) : null,
+      client: passenger.client ?? null,
+    })),
 
     distance: ride.distance,
     estimatedDuration: ride.duration,
     requestedAt: ride.requestedAt,
+    createdAt: ride.createdAt,
+
+    tip: ride.tip != null ? Number(ride.tip) : null,
+    tipSubmittedAt: ride.tipSubmittedAt ?? null,
   };
 }

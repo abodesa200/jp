@@ -44,6 +44,16 @@ export const verifyOtpSchema = z
         description: 'User type',
         example: 'client',
       }),
+
+    name: z.string().min(2).max(50).optional().openapi({
+      description: 'Full name (required for new client signup)',
+      example: 'أحمد محمد',
+    }),
+
+    phone: z.string().min(6).max(20).optional().openapi({
+      description: 'Phone number (required for new client signup)',
+      example: '0501234567',
+    }),
   })
 
   // 👇 مهم جدًا

@@ -10,7 +10,7 @@ import { z } from "zod";
 // ─────────────────────────────────────────────
 
 const tipSchema = z.object({
-    amount: z.number().positive(),
+    amount: z.number().min(0),
 });
 
 export async function POST(

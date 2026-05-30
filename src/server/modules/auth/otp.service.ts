@@ -10,6 +10,8 @@ import { otpRepository } from "./otp.repository";
 import { SendOtpDTO, VerifyOtpDTO } from "./otp.schema";
 import { generateOtpCode, getOtpExpiryDate, hashOtp } from "./otp.utils";
 import { userRepository } from "./user.repository";
+import { profileRepository } from "../profile/profile.repository";
+import { ConflictError } from "@/server/core/http/http-errors";
 
 const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
 
@@ -67,7 +69,7 @@ export async function sendOtpService(data: SendOtpDTO) {
 // ─────────────────────────────────────────────
 
 export async function verifyOtpService(data: VerifyOtpDTO) {
-    const { email, code, appContext } = data;
+    const { email, code, appContext, name, phone } = data;
 
     const purpose =
         appContext === "driver"
@@ -104,7 +106,14 @@ export async function verifyOtpService(data: VerifyOtpDTO) {
             );
         }
 
-        user = await userRepository.createClient(email);
+        if (phone) {
+            const existingPhone = await profileRepository.findByPhone(phone);
+            if (existingPhone) {
+                throw new ConflictError("Phone already in use");
+            }
+        }
+
+        user = await userRepository.createClient(email, { name, phone });
     }
 
     const token = await jwtService.sign({
@@ -119,6 +128,8 @@ export async function verifyOtpService(data: VerifyOtpDTO) {
         user: {
             id: user.id,
             email: user.email,
+            name: user.name,
+            phone: user.phone,
             role: user.role,
             isVerified: user.isVerified,
         },

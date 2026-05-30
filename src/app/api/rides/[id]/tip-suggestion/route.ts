@@ -37,7 +37,7 @@ export async function GET(
             throw new BadRequestError("Ride data is incomplete");
         }
 
-        const suggestedTip = await fetchTipSuggestion({
+        const baseTip = await fetchTipSuggestion({
             pickupLat: ride.pickupLat,
             pickupLng: ride.pickupLng,
             dropoffLat: ride.dropoffLat,
@@ -46,10 +46,17 @@ export async function GET(
             startedAt: ride.startedAt,
         });
 
+        const suggestedTips = [
+            parseFloat((baseTip * 0.5).toFixed(2)),
+            parseFloat(baseTip.toFixed(2)),
+            parseFloat((baseTip * 2).toFixed(2)),
+        ].filter((v) => v > 0);
+
         return Response.json({
             success: true,
             data: {
-                suggestedTip,
+                suggestedTip: baseTip,
+                suggestedTips,
                 finalFare: ride.finalFare,
             },
         });

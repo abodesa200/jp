@@ -151,8 +151,10 @@ export async function createRideService(
         rideFlow,
         clientOffer,
         maxPassengers,
-        // ensure required field for repository
-        availableSeats: typeof maxPassengers === 'number' ? maxPassengers : 1,
+        availableSeats:
+            rideMode === "CARPOOLING"
+                ? Math.max((maxPassengers ?? 4) - 1, 0)
+                : 1,
 
         distance,
         systemFare,
@@ -160,6 +162,8 @@ export async function createRideService(
         discountAmount,
         finalFare,
     });
+
+    const rideWithPassengers = await ridesRepository.findRideWithDetails(ride.id);
 
     // ─────────────────────────────
     // 5. Save coupon usage (after ride created)
@@ -181,11 +185,11 @@ export async function createRideService(
     // ─────────────────────────────
 
     emitSocketEvent("drivers", "ride:created", {
-        ride: mapRide(ride),
+        ride: mapRide(rideWithPassengers ?? ride),
     });
 
     return {
-        ride: mapRide(ride),
+        ride: mapRide(rideWithPassengers ?? ride),
     };
 }
 // ─────────────────────────────────────────────

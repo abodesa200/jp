@@ -428,8 +428,14 @@ export default function TestDriverPage() {
                             <label className="block text-sm font-medium mb-2">Max Distance (km)</label>
                             <input
                                 type="number"
+                                min="1"
+                                max="50"
+                                step="0.1"
                                 value={maxDistance}
-                                onChange={(e) => setMaxDistance(parseInt(e.target.value))}
+                                onChange={(e) => {
+                                    const val = parseFloat(e.target.value);
+                                    setMaxDistance(isNaN(val) ? 10 : val);
+                                }}
                                 className="w-full border rounded px-3 py-2"
                             />
                         </div>

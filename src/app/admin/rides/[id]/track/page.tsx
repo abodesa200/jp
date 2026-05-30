@@ -255,6 +255,11 @@ export default function TrackRidePage() {
               <CardHeader><CardTitle className="text-base">Quick Actions</CardTitle></CardHeader>
               <CardContent className="space-y-2">
                 {ride.status === "ACCEPTED" && (
+                  <Button className="w-full" disabled={actionLoading} onClick={() => updateRideStatus("DRIVER_ARRIVED")}>
+                    {actionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "I've Arrived"}
+                  </Button>
+                )}
+                {ride.status === "DRIVER_ARRIVED" && (
                   <Button className="w-full" disabled={actionLoading} onClick={() => updateRideStatus("IN_PROGRESS")}>
                     {actionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Start Ride"}
                   </Button>

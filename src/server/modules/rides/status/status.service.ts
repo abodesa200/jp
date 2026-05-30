@@ -5,6 +5,7 @@ import {
     NotFoundError,
 } from "@/server/core/http/http-errors";
 import { emitSocketEvent } from "@/server/lib/socket/emit";
+import { findRideWithDetails } from "../rides.repository";
 import { mapRide } from "../rides.utils";
 import * as statusRepository from "./status.repository";
 import { CancelRideDTO, UpdateRideStatusDTO } from "./status.schema";
@@ -18,12 +19,21 @@ type Payload = {
    STATE MACHINE
 ───────────────────────────── */
 const allowedTransitions: Record<string, string[]> = {
-    REQUESTED: ["ACCEPTED", "CANCELLED"],
-    ACCEPTED: ["IN_PROGRESS", "CANCELLED"],
-    IN_PROGRESS: ["COMPLETED", "CANCELLED"],
-    COMPLETED: [],
-    CANCELLED: [],
+    REQUESTED:         ["ACCEPTED", "CLIENT_CANCELLED", "DRIVER_CANCELLED"],
+    ACCEPTED:          ["DRIVER_ARRIVED", "IN_PROGRESS", "CLIENT_CANCELLED", "DRIVER_CANCELLED"],
+    DRIVER_ARRIVED:    ["IN_PROGRESS", "CLIENT_CANCELLED"],
+    IN_PROGRESS:       ["COMPLETED", "CLIENT_CANCELLED", "DRIVER_CANCELLED"],
+    COMPLETED:         [],
+    CLIENT_CANCELLED:  [],
+    DRIVER_CANCELLED:  [],
 };
+
+function normalizeStatus(input: string, isClient: boolean, isDriver: boolean): string {
+    if (input === "CANCELLED") {
+        return isClient ? "CLIENT_CANCELLED" : "DRIVER_CANCELLED";
+    }
+    return input;
+}
 
 /* ─────────────────────────────
    ROLE VALIDATION
@@ -36,11 +46,11 @@ function validateRoleForStatus(
 
     if (isAdmin) return;
 
-    if (["ACCEPTED", "IN_PROGRESS", "COMPLETED"].includes(status) && !isDriver) {
+    if (["ACCEPTED", "DRIVER_ARRIVED", "IN_PROGRESS", "COMPLETED"].includes(status) && !isDriver) {
         throw new ForbiddenError("Only driver can perform this action");
     }
 
-    if (status === "CANCELLED" && !isClient && !isDriver) {
+    if ((status === "CLIENT_CANCELLED" || status === "DRIVER_CANCELLED") && !isClient && !isDriver) {
         throw new ForbiddenError("Not allowed to cancel ride");
     }
 }
@@ -65,10 +75,12 @@ export async function updateRideStatusService(
         throw new ForbiddenError("No access to this ride");
     }
 
-    const { status, cancelReason } = data;
+    const { status: inputStatus, cancelReason } = data;
+    const status = normalizeStatus(inputStatus, isClient, isDriver);
 
     // state validation
-    if (!allowedTransitions[ride.status].includes(status)) {
+    const allowed = allowedTransitions[ride.status] || [];
+    if (!allowed.includes(status)) {
         throw new BadRequestError("Invalid status transition");
     }
 
@@ -81,18 +93,25 @@ export async function updateRideStatusService(
     if (status === "IN_PROGRESS") updateData.startedAt = new Date();
     if (status === "COMPLETED") updateData.completedAt = new Date();
 
-    if (status === "CANCELLED") {
+    if (status === "CLIENT_CANCELLED" || status === "DRIVER_CANCELLED") {
         updateData.cancelledAt = new Date();
         if (cancelReason) updateData.cancelReason = cancelReason;
     }
 
     const updated = await statusRepository.updateRideStatus(ride.id, updateData);
 
-    const mapped = mapRide(updated);
+    const rideWithDetails = await findRideWithDetails(updated.id);
+    const mapped = mapRide(rideWithDetails ?? updated);
 
     emitSocketEvent(`ride:${rideId}`, `ride:${status.toLowerCase()}`, {
         ride: mapped,
     });
+
+    if (ride.driverId) {
+        emitSocketEvent("drivers", `ride:${status.toLowerCase()}`, {
+            ride: mapped,
+        });
+    }
 
     return { ride: mapped };
 }
@@ -119,13 +138,17 @@ export async function acceptRideService(payload: Payload, rideId: string) {
         throw new ConflictError("Ride already taken or invalid state");
     }
 
-    const ride = await statusRepository.findRideById(Number(rideId));
+    const ride = await findRideWithDetails(Number(rideId));
 
     if (!ride) throw new NotFoundError("Ride not found");
 
     const mapped = mapRide(ride);
 
     emitSocketEvent(`ride:${rideId}`, "ride:accepted", {
+        ride: mapped,
+    });
+
+    emitSocketEvent("drivers", "ride:accepted", {
         ride: mapped,
     });
 
@@ -155,24 +178,33 @@ export async function cancelRideService(
         throw new BadRequestError("Cannot cancel completed ride");
     }
 
-    if (ride.status === "CLIENT_CANCELLED") {
+    if (ride.status === "CLIENT_CANCELLED" || ride.status === "DRIVER_CANCELLED") {
         throw new BadRequestError("Already cancelled");
     }
 
     const cancelledBy = isClient ? "CLIENT" : "DRIVER";
     const reason = data.reason || `Cancelled by ${cancelledBy}`;
 
+    const cancelStatus = isClient ? "CLIENT_CANCELLED" : "DRIVER_CANCELLED";
+
     const updated = await statusRepository.updateRideStatus(ride.id, {
-        status: "CANCELLED",
+        status: cancelStatus,
         cancelledAt: new Date(),
         cancelReason: `[${cancelledBy}] ${reason}`,
     });
 
-    const mapped = mapRide(updated);
+    const rideWithDetails = await findRideWithDetails(updated.id);
+    const mapped = mapRide(rideWithDetails ?? updated);
 
     emitSocketEvent(`ride:${rideId}`, "ride:cancelled", {
         ride: mapped,
     });
+
+    if (ride.driverId) {
+        emitSocketEvent("drivers", "ride:cancelled", {
+            ride: mapped,
+        });
+    }
 
     return { ride: mapped };
 }

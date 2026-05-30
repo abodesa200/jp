@@ -14,7 +14,8 @@ export async function getDashboardStats() {
         totalRides,
         activeRides,
         completedRides,
-        cancelledRides,
+        clientCancelledRides,
+        driverCancelledRides,
         pendingDrivers,
         onlineDrivers,
         totalRevenue,
@@ -44,7 +45,8 @@ export async function getDashboardStats() {
         prisma.ride.count({ where: { status: "COMPLETED" } }),
 
         // Cancelled rides
-        prisma.ride.count({ where: { status: "CANCELLED" } }),
+        prisma.ride.count({ where: { status: "CLIENT_CANCELLED" } }),
+        prisma.ride.count({ where: { status: "DRIVER_CANCELLED" } }),
 
         // Pending drivers
         prisma.driver.count({ where: { isApproved: false } }),
@@ -116,7 +118,7 @@ export async function getDashboardStats() {
             totalRides,
             activeRides,
             completedRides,
-            cancelledRides,
+            cancelledRides: clientCancelledRides + driverCancelledRides,
             pendingDrivers,
             onlineDrivers,
             totalRevenue: totalRevenue._sum.fare || 0,
@@ -189,14 +191,16 @@ export async function getRideStats() {
         accepted,
         inProgress,
         completed,
-        cancelled,
+        clientCancelled,
+        driverCancelled,
     ] = await Promise.all([
         prisma.ride.count(),
         prisma.ride.count({ where: { status: "REQUESTED" } }),
         prisma.ride.count({ where: { status: "ACCEPTED" } }),
         prisma.ride.count({ where: { status: "IN_PROGRESS" } }),
         prisma.ride.count({ where: { status: "COMPLETED" } }),
-        prisma.ride.count({ where: { status: "CANCELLED" } }),
+        prisma.ride.count({ where: { status: "CLIENT_CANCELLED" } }),
+        prisma.ride.count({ where: { status: "DRIVER_CANCELLED" } }),
     ]);
 
     return {
@@ -205,7 +209,7 @@ export async function getRideStats() {
         accepted,
         inProgress,
         completed,
-        cancelled,
+        cancelled: clientCancelled + driverCancelled,
     };
 }
 

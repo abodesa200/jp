@@ -8,8 +8,11 @@ export const updateRideStatusSchema = z.object({
     status: z.enum([
         "REQUESTED",
         "ACCEPTED",
+        "DRIVER_ARRIVED",
         "IN_PROGRESS",
         "COMPLETED",
+        "CLIENT_CANCELLED",
+        "DRIVER_CANCELLED",
         "CANCELLED",
     ]),
     cancelReason: z.string().optional(),

@@ -37,11 +37,16 @@ export const userRepository = {
     /**
      * إنشاء client جديد
      */
-    createClient(email: string) {
+    createClient(
+        email: string,
+        profile?: { name?: string; phone?: string }
+    ) {
         return prisma.user.create({
             data: {
                 email,
                 role: "CLIENT",
+                name: profile?.name,
+                phone: profile?.phone,
             },
             include: { driver: true },
         });
