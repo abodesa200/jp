@@ -10,7 +10,7 @@ import * as ridesRepository from "./rides.repository";
 import { CreateRideDTO, GetNearbyRidesQueryDTO, GetRidesQueryDTO } from "./rides.schema";
 import {
     calculateDistance,
-    calculateEstimatedDuration,
+    fetchDurationFromModel,
     fetchFareFromModel,
     mapRide,
 } from "./rides.utils";
@@ -66,7 +66,13 @@ export async function createRideService(
         serviceType,
         rideMode,
     });
-    const estimatedDuration = calculateEstimatedDuration(distance);
+    const estimatedDuration = await fetchDurationFromModel({
+        pickupLat,
+        pickupLng,
+        dropoffLat,
+        dropoffLng,
+        distance,
+    });
 
     let discountAmount = 0;
     let couponUsageData: null | {

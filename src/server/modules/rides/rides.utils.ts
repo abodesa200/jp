@@ -166,6 +166,64 @@ export function calculateEstimatedDuration(distanceKm: number): number {
 }
 
 // ─────────────────────────────────────────────
+// ML Model Duration Prediction
+// ─────────────────────────────────────────────
+
+const DURATION_MODEL_URL =
+  process.env.DURATION_MODEL_URL ?? "http://127.0.0.1:5000/duration";
+
+export async function fetchDurationFromModel(params: {
+  pickupLat: number;
+  pickupLng: number;
+  dropoffLat: number;
+  dropoffLng: number;
+  distance: number;
+}): Promise<number> {
+  const now = new Date();
+
+  // تقدير أولي للمدة بناءً على 40 كم/ساعة — يُستخدم لحساب speed_haversine
+  const estimatedSeconds = Math.ceil((params.distance / 40) * 3600);
+
+  const features = {
+    vendor_id: 1,
+    passenger_count: 1,
+    pickup_longitude: params.pickupLng,
+    pickup_latitude: params.pickupLat,
+    dropoff_longitude: params.dropoffLng,
+    dropoff_latitude: params.dropoffLat,
+    store_and_fwd_flag: 0,
+    pickup_month: now.getMonth() + 1,
+    pickup_day: now.getDate(),
+    pickup_dayofweek: now.getDay(),
+    pickup_hour: now.getHours(),
+    pickup_minute: now.getMinutes(),
+    pickup_second: now.getSeconds(),
+    is_weekend: [0, 6].includes(now.getDay()) ? 1 : 0,
+    trip_duration_seconds: estimatedSeconds,
+  };
+
+  try {
+    const res = await fetch(DURATION_MODEL_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(features),
+      signal: AbortSignal.timeout(5000),
+    });
+
+    if (!res.ok) throw new Error(`Duration model returned ${res.status}`);
+
+    const result: { trip_duration_seconds: number; trip_duration_minutes: number } =
+      await res.json();
+
+    // نرجع بالدقائق مقرّبة لأعلى
+    return Math.ceil(result.trip_duration_minutes);
+  } catch {
+    console.warn("[duration] ML model unreachable, falling back to rule-based duration");
+    return calculateEstimatedDuration(params.distance);
+  }
+}
+
+// ─────────────────────────────────────────────
 // Ride Mapper (DTO)
 // ─────────────────────────────────────────────
 

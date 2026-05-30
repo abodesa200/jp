@@ -3,7 +3,7 @@ import { verifyToken } from "@/server/lib/auth/auth";
 import { calculateRidePriceSchema } from "@/server/modules/rides/rides.schema";
 import {
     calculateDistance,
-    calculateEstimatedDuration,
+    fetchDurationFromModel,
     fetchFareFromModel,
 } from "@/server/modules/rides/rides.utils";
 import { NextRequest } from "next/server";
@@ -26,16 +26,12 @@ export async function POST(req: NextRequest) {
         const { pickupLat, pickupLng, dropoffLat, dropoffLng, serviceType, rideMode } = data;
 
         const distance = calculateDistance(pickupLat, pickupLng, dropoffLat, dropoffLng);
-        const systemFare = await fetchFareFromModel({
-            pickupLat,
-            pickupLng,
-            dropoffLat,
-            dropoffLng,
-            distance,
-            serviceType,
-            rideMode,
-        });
-        const estimatedDuration = calculateEstimatedDuration(distance);
+
+        // run both models in parallel
+        const [systemFare, estimatedDuration] = await Promise.all([
+            fetchFareFromModel({ pickupLat, pickupLng, dropoffLat, dropoffLng, distance, serviceType, rideMode }),
+            fetchDurationFromModel({ pickupLat, pickupLng, dropoffLat, dropoffLng, distance }),
+        ]);
 
         return Response.json({
             success: true,
