@@ -75,15 +75,15 @@ export async function fetchFareFromModel(params: {
   const now = new Date();
 
   const features = {
-    pickup_latitude: params.pickupLat,
     pickup_longitude: params.pickupLng,
-    dropoff_latitude: params.dropoffLat,
+    pickup_latitude: params.pickupLat,
     dropoff_longitude: params.dropoffLng,
-    distance: params.distance,
+    dropoff_latitude: params.dropoffLat,
     pickup_hour: now.getHours(),
     pickup_day: now.getDate(),
     pickup_month: now.getMonth() + 1,
     pickup_dayofweek: now.getDay(),
+    distance: params.distance,
   };
 
   try {
@@ -97,6 +97,11 @@ export async function fetchFareFromModel(params: {
     if (!res.ok) throw new Error(`Model API returned ${res.status}`);
 
     const predictions: number[] = await res.json();
+
+    if (!Array.isArray(predictions) || predictions.length === 0 || typeof predictions[0] !== "number") {
+      throw new Error("Model returned invalid predictions");
+    }
+
     const baseFare = predictions[0];
 
     // apply serviceType & rideMode multipliers on top of model output
@@ -151,8 +156,13 @@ export async function fetchTipSuggestion(params: {
 
     if (!res.ok) throw new Error(`Tips model returned ${res.status}`);
 
-    const predictions: number[] = await res.json();
-    return parseFloat(Math.max(predictions[0], 0).toFixed(2));
+    const result: { predictions: number[] } = await res.json();
+
+    if (!result?.predictions?.length || typeof result.predictions[0] !== "number") {
+      throw new Error("Tips model returned invalid response");
+    }
+
+    return parseFloat(Math.max(result.predictions[0], 0).toFixed(2));
   } catch {
     console.warn("[tips] ML model unreachable, returning 0");
     return 0;

@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
             fetchFareFromModel({ pickupLat, pickupLng, dropoffLat, dropoffLng, distance, serviceType, rideMode }),
             fetchDurationFromModel({ pickupLat, pickupLng, dropoffLat, dropoffLng, distance }),
         ]);
-
+        console.log(`[fare] distance: ${distance} km, fare: $${systemFare}, duration: ${estimatedDuration} min`);
         return Response.json({
             success: true,
             data: {
