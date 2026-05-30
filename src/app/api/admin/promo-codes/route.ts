@@ -17,7 +17,6 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(req: NextRequest) {
     try {
         const payload = await verifyToken(req);
-
         const { searchParams } = new URL(req.url);
         const query = getPromoCodesQuerySchema.parse({
             isActive: searchParams.get("isActive") || "all",

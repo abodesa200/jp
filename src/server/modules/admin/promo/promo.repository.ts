@@ -6,7 +6,7 @@ import {
 } from "./promo.schema";
 
 // ─────────────────────────────────────────────
-// Get Promo Codes
+// Get Coupons
 // ─────────────────────────────────────────────
 
 export async function getPromoCodes(query: GetPromoCodesQueryDTO) {
@@ -28,7 +28,7 @@ export async function getPromoCodes(query: GetPromoCodesQueryDTO) {
     }
 
     const [promoCodes, total] = await Promise.all([
-        prisma.promoCode.findMany({
+        prisma.coupon.findMany({
             where,
             skip,
             take: query.limit,
@@ -52,18 +52,18 @@ export async function getPromoCodes(query: GetPromoCodesQueryDTO) {
                 },
             },
         }),
-        prisma.promoCode.count({ where }),
+        prisma.coupon.count({ where }),
     ]);
 
     return { promoCodes, total };
 }
 
 // ─────────────────────────────────────────────
-// Get Promo Code by ID
+// Get Coupon by ID
 // ─────────────────────────────────────────────
 
 export async function getPromoCodeById(promoId: number) {
-    return prisma.promoCode.findUnique({
+    return prisma.coupon.findUnique({
         where: { id: promoId },
         include: {
             usages: {
@@ -92,30 +92,35 @@ export async function getPromoCodeById(promoId: number) {
 // ─────────────────────────────────────────────
 
 export async function findByCode(code: string) {
-    return prisma.promoCode.findUnique({
+    return prisma.coupon.findUnique({
         where: { code },
     });
 }
 
 // ─────────────────────────────────────────────
-// Create Promo Code
+// Create Coupon
 // ─────────────────────────────────────────────
 
 export async function createPromoCode(data: CreatePromoCodeDTO) {
-    return prisma.promoCode.create({
+    return prisma.coupon.create({
         data: {
             code: data.code.toUpperCase(),
             discountType: data.discountType,
             discountValue: data.discountValue,
+            maxDiscount: data.maxDiscount ?? null,
+            minFare: data.minFare ?? null,
+            usageLimit: data.usageLimit ?? null,
+            perUserLimit: data.perUserLimit ?? 1,
+            startsAt: data.startsAt ? new Date(data.startsAt) : null,
             expiresAt: data.expiresAt ? new Date(data.expiresAt) : null,
-            maxUses: data.maxUses,
             isActive: data.isActive ?? true,
+            newUsersOnly: data.newUsersOnly ?? false,
         },
     });
 }
 
 // ─────────────────────────────────────────────
-// Update Promo Code
+// Update Coupon
 // ─────────────────────────────────────────────
 
 export async function updatePromoCode(
@@ -125,47 +130,51 @@ export async function updatePromoCode(
     const updateData: any = {};
 
     if (data.code !== undefined) updateData.code = data.code.toUpperCase();
-    if (data.discountType !== undefined)
-        updateData.discountType = data.discountType;
-    if (data.discountValue !== undefined)
-        updateData.discountValue = data.discountValue;
-    if (data.expiresAt !== undefined)
-        updateData.expiresAt = data.expiresAt ? new Date(data.expiresAt) : null;
-    if (data.maxUses !== undefined) updateData.maxUses = data.maxUses;
+    if (data.discountType !== undefined) updateData.discountType = data.discountType;
+    if (data.discountValue !== undefined) updateData.discountValue = data.discountValue;
+    if (data.maxDiscount !== undefined) updateData.maxDiscount = data.maxDiscount;
+    if (data.minFare !== undefined) updateData.minFare = data.minFare;
+    if (data.usageLimit !== undefined) updateData.usageLimit = data.usageLimit;
+    if (data.perUserLimit !== undefined) updateData.perUserLimit = data.perUserLimit;
+    if (data.startsAt !== undefined) updateData.startsAt = data.startsAt ? new Date(data.startsAt) : null;
+    if (data.expiresAt !== undefined) updateData.expiresAt = data.expiresAt ? new Date(data.expiresAt) : null;
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
+    if (data.newUsersOnly !== undefined) updateData.newUsersOnly = data.newUsersOnly;
 
-    return prisma.promoCode.update({
+    return prisma.coupon.update({
         where: { id: promoId },
         data: updateData,
     });
 }
 
 // ─────────────────────────────────────────────
-// Delete Promo Code
+// Delete Coupon
 // ─────────────────────────────────────────────
 
 export async function deletePromoCode(promoId: number) {
-    return prisma.promoCode.delete({
+    return prisma.coupon.delete({
         where: { id: promoId },
     });
 }
 
 // ─────────────────────────────────────────────
-// Get Promo Stats
+// Get Coupon Stats
 // ─────────────────────────────────────────────
 
 export async function getPromoStats() {
+    const now = new Date();
+
     const [total, active, expired, totalUsages] = await Promise.all([
-        prisma.promoCode.count(),
-        prisma.promoCode.count({ where: { isActive: true } }),
-        prisma.promoCode.count({
+        prisma.coupon.count(),
+        prisma.coupon.count({ where: { isActive: true } }),
+        prisma.coupon.count({
             where: {
                 expiresAt: {
-                    lt: new Date(),
+                    lt: now,
                 },
             },
         }),
-        prisma.promoCodeUsage.count(),
+        prisma.couponUsage.count(),
     ]);
 
     return {

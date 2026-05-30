@@ -7,6 +7,11 @@ import { prisma } from "@/lib/prisma";
 export async function findRideById(rideId: number) {
     return prisma.ride.findUnique({
         where: { id: rideId },
+        include: {
+            driver: {
+                select: { userId: true },
+            },
+        },
     });
 }
 

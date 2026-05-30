@@ -58,7 +58,7 @@ export async function updateRideStatusService(
     if (!ride) throw new NotFoundError("Ride not found");
 
     const isClient = ride.clientId === payload.userId;
-    const isDriver = ride.driverId === payload.userId;
+    const isDriver = ride.driver?.userId === payload.userId;
     const isAdmin = payload.role === "ADMIN";
 
     if (!isClient && !isDriver && !isAdmin) {
@@ -145,7 +145,7 @@ export async function cancelRideService(
     if (!ride) throw new NotFoundError("Ride not found");
 
     const isClient = ride.clientId === payload.userId;
-    const isDriver = ride.driverId === payload.userId;
+    const isDriver = ride.driver?.userId === payload.userId;
 
     if (!isClient && !isDriver) {
         throw new ForbiddenError("No permission to cancel");

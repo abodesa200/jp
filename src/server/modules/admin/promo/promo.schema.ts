@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 // ─────────────────────────────────────────────
-// Get Promo Codes Query
+// Get Coupons Query
 // ─────────────────────────────────────────────
 
 export const getPromoCodesQuerySchema = z.object({
@@ -14,7 +14,7 @@ export const getPromoCodesQuerySchema = z.object({
 export type GetPromoCodesQueryDTO = z.infer<typeof getPromoCodesQuerySchema>;
 
 // ─────────────────────────────────────────────
-// Create Promo Code
+// Create Coupon
 // ─────────────────────────────────────────────
 
 export const createPromoCodeSchema = z.object({
@@ -25,15 +25,20 @@ export const createPromoCodeSchema = z.object({
         .regex(/^[A-Z0-9]+$/, "Code must contain only uppercase letters and numbers"),
     discountType: z.enum(["PERCENTAGE", "FIXED"]),
     discountValue: z.number().positive("Discount value must be positive"),
+    maxDiscount: z.number().positive().optional(),
+    minFare: z.number().positive().optional(),
+    usageLimit: z.number().int().positive().optional(),
+    perUserLimit: z.number().int().positive().optional().default(1),
+    startsAt: z.string().datetime().optional(),
     expiresAt: z.string().datetime().optional(),
-    maxUses: z.number().int().positive().optional(),
     isActive: z.boolean().optional().default(true),
+    newUsersOnly: z.boolean().optional().default(false),
 });
 
 export type CreatePromoCodeDTO = z.infer<typeof createPromoCodeSchema>;
 
 // ─────────────────────────────────────────────
-// Update Promo Code
+// Update Coupon
 // ─────────────────────────────────────────────
 
 export const updatePromoCodeSchema = z.object({
@@ -45,9 +50,14 @@ export const updatePromoCodeSchema = z.object({
         .optional(),
     discountType: z.enum(["PERCENTAGE", "FIXED"]).optional(),
     discountValue: z.number().positive().optional(),
+    maxDiscount: z.number().positive().optional(),
+    minFare: z.number().positive().optional(),
+    usageLimit: z.number().int().positive().optional(),
+    perUserLimit: z.number().int().positive().optional(),
+    startsAt: z.string().datetime().optional(),
     expiresAt: z.string().datetime().optional(),
-    maxUses: z.number().int().positive().optional(),
     isActive: z.boolean().optional(),
+    newUsersOnly: z.boolean().optional(),
 });
 
 export type UpdatePromoCodeDTO = z.infer<typeof updatePromoCodeSchema>;
