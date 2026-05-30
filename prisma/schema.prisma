@@ -186,6 +186,7 @@ model Ride {
 
   discountAmount Decimal? @default(0)
   finalFare      Decimal?
+  tip            Decimal? @default(0)
 
   offerExpiresAt DateTime?
 

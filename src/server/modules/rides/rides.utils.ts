@@ -61,7 +61,7 @@ export function calculateFare(
 // ─────────────────────────────────────────────
 
 const ML_API_URL =
-  process.env.FARE_MODEL_URL ?? "http://127.0.0.1:5000/predict";
+  process.env.FARE_MODEL_URL ?? "http://127.0.0.1:5000/price";
 
 export async function fetchFareFromModel(params: {
   pickupLat: number;
@@ -116,8 +116,48 @@ export async function fetchFareFromModel(params: {
   }
 }
 
-// ─────────────────────────────────────────────
-// Estimated Duration Calculation
+const TIPS_MODEL_URL =
+  process.env.TIPS_MODEL_URL ?? "http://127.0.0.1:5000/tips";
+
+export async function fetchTipSuggestion(params: {
+  pickupLat: number;
+  pickupLng: number;
+  dropoffLat: number;
+  dropoffLng: number;
+  distance: number;
+  startedAt: Date;
+}): Promise<number> {
+  const t = params.startedAt;
+
+  const features = {
+    pickup_latitude: params.pickupLat,
+    pickup_longitude: params.pickupLng,
+    dropoff_latitude: params.dropoffLat,
+    dropoff_longitude: params.dropoffLng,
+    distance: params.distance,
+    pickup_hour: t.getHours(),
+    pickup_day: t.getDate(),
+    pickup_month: t.getMonth() + 1,
+    pickup_dayofweek: t.getDay(),
+  };
+
+  try {
+    const res = await fetch(TIPS_MODEL_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify([features]),
+      signal: AbortSignal.timeout(5000),
+    });
+
+    if (!res.ok) throw new Error(`Tips model returned ${res.status}`);
+
+    const predictions: number[] = await res.json();
+    return parseFloat(Math.max(predictions[0], 0).toFixed(2));
+  } catch {
+    console.warn("[tips] ML model unreachable, returning 0");
+    return 0;
+  }
+}
 // ─────────────────────────────────────────────
 
 export function calculateEstimatedDuration(distanceKm: number): number {

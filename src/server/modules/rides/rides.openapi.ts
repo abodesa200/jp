@@ -294,6 +294,37 @@ registry.registerPath({
 
 registry.registerPath({
     method: 'get',
+    path: '/api/rides/{id}/tip-suggestion',
+    tags: ['Rides – Client'],
+    summary: 'Get ML-suggested tip amount for a completed ride',
+    description: 'Returns a suggested tip amount from the ML model based on ride data. Only available after the ride is COMPLETED.',
+    request: {
+        params: rideIdParams,
+    },
+    responses: {
+        200: {
+            description: 'Tip suggestion returned successfully',
+            content: {
+                'application/json': {
+                    schema: z.object({
+                        success: z.boolean(),
+                        data: z.object({
+                            suggestedTip: z.number().openapi({ example: 2.50 }),
+                            finalFare: z.number().nullable().openapi({ example: 12.50 }),
+                        }),
+                    }),
+                },
+            },
+        },
+        400: { description: 'Ride is not completed yet' },
+        401: { description: 'Unauthorized' },
+        403: { description: 'Only the ride client can request a tip suggestion' },
+        404: { description: 'Ride not found' },
+    },
+})
+
+registry.registerPath({
+    method: 'get',
     path: '/api/rides/{id}/review',
     tags: ['Rides – Client'],
     summary: 'Get the review submitted for a specific ride',
@@ -391,15 +422,71 @@ registry.registerPath({
     method: 'post',
     path: '/api/rides/{id}/complete',
     tags: ['Rides – Driver'],
-    summary: 'Complete a ride and confirm cash payment received',
+    summary: 'Complete a ride and get tip suggestions from ML model',
+    description: 'Driver marks the ride as completed. Returns the final fare and 3 tip options suggested by the ML model.',
     request: {
         params: rideIdParams,
     },
     responses: {
-        200: { description: 'Ride completed and payment confirmed' },
+        200: {
+            description: 'Ride completed – tip suggestions returned',
+            content: {
+                'application/json': {
+                    schema: z.object({
+                        success: z.boolean(),
+                        data: z.object({
+                            ride: z.object({}).passthrough(),
+                            suggestedTips: z.array(z.number()).openapi({ example: [1.25, 2.50, 5.00] }),
+                        }),
+                    }),
+                },
+            },
+        },
+        400: { description: 'Ride is not IN_PROGRESS' },
         401: { description: 'Unauthorized' },
-        403: { description: 'Forbidden – only the assigned driver can complete the ride' },
+        403: { description: 'Only the assigned driver can complete the ride' },
         404: { description: 'Ride not found' },
-        409: { description: 'Ride is not in progress' },
+    },
+})
+
+registry.registerPath({
+    method: 'post',
+    path: '/api/rides/{id}/tip',
+    tags: ['Rides – Client'],
+    summary: 'Add a tip to a completed ride',
+    description: 'Client selects a tip amount. The tip is added to the driver wallet immediately.',
+    request: {
+        params: rideIdParams,
+        body: {
+            content: {
+                'application/json': {
+                    schema: z.object({
+                        amount: z.number().positive().openapi({ example: 2.50 }),
+                    }),
+                },
+            },
+        },
+    },
+    responses: {
+        200: {
+            description: 'Tip added successfully',
+            content: {
+                'application/json': {
+                    schema: z.object({
+                        success: z.boolean(),
+                        data: z.object({
+                            ride: z.object({}).passthrough(),
+                            tip: z.number().openapi({ example: 2.50 }),
+                            totalAmount: z.number().openapi({ example: 15.00 }),
+                        }),
+                    }),
+                },
+            },
+        },
+        400: { description: 'Ride is not completed' },
+        401: { description: 'Unauthorized' },
+        403: { description: 'Only the ride client can add a tip' },
+        404: { description: 'Ride not found' },
+        409: { description: 'Tip already added' },
     },
 })
