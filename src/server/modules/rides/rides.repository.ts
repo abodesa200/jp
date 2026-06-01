@@ -168,11 +168,12 @@ export async function getUserRides(userId: number, query: GetRidesQueryDTO) {
 // Get Available Rides (for drivers)
 // ─────────────────────────────────────────────
 
-export async function getAvailableRides() {
+export async function getAvailableRides(serviceType: ServiceType) {
   return prisma.ride.findMany({
     where: {
       status: "REQUESTED",
       driverId: null,
+      OR: [{ serviceType }, { rideMode: "CARPOOLING" }],
     },
     include: {
       client: {

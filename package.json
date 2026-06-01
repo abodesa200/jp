@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"next dev\" \"tsx src/server/lib/socket/socket-server.ts\"",
+    "dev": "prisma generate && concurrently \"next dev\" \"tsx --env-file=.env src/server/lib/socket/socket-server.ts\"",
     "sync:postman": "ts-node --project tsconfig.scripts.json src/server/lib/sync-postman.ts",
     "generate:openapi": "tsx src/scripts/generate-openapi.ts",
     "dev:next": "next dev",

@@ -4,6 +4,7 @@ import {
     ForbiddenError,
     NotFoundError,
 } from "@/server/core/http/http-errors";
+import { emitRideCreatedToMatchingDrivers } from "@/server/lib/socket/driver-rooms";
 import { emitSocketEvent } from "@/server/lib/socket/emit";
 import { CreateRideDTO } from "./create-ride.schema";
 
@@ -164,10 +165,8 @@ export async function createRideService(
         // Notify ride room
         await emitSocketEvent(`ride:${ride.id}`, "ride:accepted", { ride });
     } else {
-        // Notify all drivers
-        await emitSocketEvent("drivers", "ride:created", { ride });
+        await emitRideCreatedToMatchingDrivers(ride, { ride });
 
-        // Notify client
         await emitSocketEvent(`user:${data.clientId}`, "ride:created", {
             ride,
         });

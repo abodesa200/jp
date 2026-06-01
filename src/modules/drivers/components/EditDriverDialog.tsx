@@ -11,20 +11,18 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { SERVICE_TYPE_OPTIONS, type ServiceTypeValue } from "@/modules/drivers/constants";
+import type { Driver } from "@/modules/drivers/types";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
-
-interface Driver {
-    id: number;
-    licenseNumber: string;
-    carModel: string;
-    carPlate: string;
-    carColor: string | null;
-    carYear: number | null;
-    isApproved: boolean;
-    isOnline: boolean;
-}
 
 interface EditDriverDialogProps {
     open: boolean;
@@ -39,6 +37,7 @@ interface FormData {
     carPlate: string;
     carColor: string;
     carYear: string;
+    serviceType: ServiceTypeValue;
     isApproved: boolean;
     isOnline: boolean;
 }
@@ -50,6 +49,7 @@ export function EditDriverDialog({ open, onOpenChange, driver, onSuccess }: Edit
         carPlate: "",
         carColor: "",
         carYear: "",
+        serviceType: "STANDARD",
         isApproved: false,
         isOnline: false,
     });
@@ -65,8 +65,9 @@ export function EditDriverDialog({ open, onOpenChange, driver, onSuccess }: Edit
                 carPlate: driver.carPlate,
                 carColor: driver.carColor ?? "",
                 carYear: driver.carYear?.toString() ?? "",
+                serviceType: driver.serviceType ?? "STANDARD",
                 isApproved: driver.isApproved,
-                isOnline: driver.isOnline,
+                isOnline: driver.isOnline ?? false,
             });
             setError(null);
         }
@@ -90,6 +91,7 @@ export function EditDriverDialog({ open, onOpenChange, driver, onSuccess }: Edit
             licenseNumber: form.licenseNumber.trim(),
             carModel: form.carModel.trim(),
             carPlate: form.carPlate.trim(),
+            serviceType: form.serviceType,
             isApproved: form.isApproved,
             isOnline: form.isOnline,
         };
@@ -137,9 +139,9 @@ export function EditDriverDialog({ open, onOpenChange, driver, onSuccess }: Edit
         <Dialog open={open} onOpenChange={handleClose}>
             <DialogContent className="sm:max-w-[520px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Edit Driver</DialogTitle>
+                    <DialogTitle>تعديل بيانات الكابتن</DialogTitle>
                     <DialogDescription>
-                        Update driver and vehicle information.
+                        تحديث معلومات الكابتن والمركبة، بما في ذلك فئة المركبة.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -159,6 +161,27 @@ export function EditDriverDialog({ open, onOpenChange, driver, onSuccess }: Edit
                                     onChange={(e) => handleChange("licenseNumber", e.target.value)}
                                     disabled={loading}
                                 />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label htmlFor="edit-serviceType">فئة المركبة *</Label>
+                                <Select
+                                    value={form.serviceType}
+                                    onValueChange={(value) =>
+                                        handleChange("serviceType", value as ServiceTypeValue)
+                                    }
+                                    disabled={loading}
+                                >
+                                    <SelectTrigger id="edit-serviceType">
+                                        <SelectValue placeholder="اختر الفئة" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {SERVICE_TYPE_OPTIONS.map((option) => (
+                                            <SelectItem key={option.value} value={option.value}>
+                                                {option.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="space-y-1.5">

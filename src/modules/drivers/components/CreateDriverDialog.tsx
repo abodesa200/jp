@@ -11,7 +11,15 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { SERVICE_TYPE_OPTIONS, type ServiceTypeValue } from "@/modules/drivers/constants";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { useState } from "react";
 
@@ -30,6 +38,7 @@ interface FormData {
     carPlate: string;
     carColor: string;
     carYear: string;
+    serviceType: ServiceTypeValue;
     isApproved: boolean;
 }
 
@@ -42,6 +51,7 @@ const initialForm: FormData = {
     carPlate: "",
     carColor: "",
     carYear: "",
+    serviceType: "STANDARD",
     isApproved: false,
 };
 
@@ -74,6 +84,7 @@ export function CreateDriverDialog({ open, onOpenChange, onSuccess }: CreateDriv
                     licenseNumber: form.licenseNumber.trim(),
                     carModel: form.carModel.trim(),
                     carPlate: form.carPlate.trim(),
+                    serviceType: form.serviceType,
                 },
             };
             if (form.email.trim()) body.email = form.email.trim();
@@ -197,6 +208,27 @@ export function CreateDriverDialog({ open, onOpenChange, onSuccess }: CreateDriv
                                     onChange={(e) => handleChange("licenseNumber", e.target.value)}
                                     disabled={loading}
                                 />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label htmlFor="serviceType">Vehicle Category *</Label>
+                                <Select
+                                    value={form.serviceType}
+                                    onValueChange={(value) =>
+                                        handleChange("serviceType", value as ServiceTypeValue)
+                                    }
+                                    disabled={loading}
+                                >
+                                    <SelectTrigger id="serviceType">
+                                        <SelectValue placeholder="Select category" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {SERVICE_TYPE_OPTIONS.map((option) => (
+                                            <SelectItem key={option.value} value={option.value}>
+                                                {option.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="space-y-1.5">

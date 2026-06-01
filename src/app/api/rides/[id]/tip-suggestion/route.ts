@@ -7,7 +7,7 @@ import { NextRequest } from "next/server";
 
 // ─────────────────────────────────────────────
 // GET /api/rides/:id/tip-suggestion
-// العميل يطلب اقتراح tip بعد اكتمال الرحلة
+// العميل أو راكب الرحلة التشاركية يطلب اقتراح tip بعد اكتمال الرحلة
 // ─────────────────────────────────────────────
 
 export async function GET(
@@ -22,17 +22,28 @@ export async function GET(
 
         if (!ride) throw new NotFoundError("Ride not found");
 
-        // فقط العميل صاحب الرحلة
-        if (ride.clientId !== payload.userId) {
-            throw new ForbiddenError("Only the ride client can request a tip suggestion");
+        const isOwner = ride.clientId === payload.userId;
+        const passenger = ride.passengers?.find(
+            (entry) => entry.clientId === payload.userId,
+        );
+        const isPassenger = Boolean(passenger);
+
+        if (!isOwner && !isPassenger) {
+            throw new ForbiddenError("You are not part of this ride");
         }
 
-        // الرحلة لازم تكون مكتملة
+        if (isOwner && ride.tipSubmittedAt) {
+            throw new BadRequestError("Tip has already been submitted");
+        }
+
+        if (isPassenger && passenger!.tipSubmittedAt) {
+            throw new BadRequestError("Tip has already been submitted");
+        }
+
         if (ride.status !== "COMPLETED") {
             throw new BadRequestError("Tip suggestion is only available for completed rides");
         }
 
-        // نحتاج المسافة ووقت البداية
         if (!ride.distance || !ride.startedAt) {
             throw new BadRequestError("Ride data is incomplete");
         }
@@ -52,12 +63,16 @@ export async function GET(
             parseFloat((baseTip * 2).toFixed(2)),
         ].filter((v) => v > 0);
 
+        const personalFare = isPassenger
+            ? Number(passenger!.fare ?? 0)
+            : Number(ride.finalFare ?? ride.systemFare ?? 0);
+
         return Response.json({
             success: true,
             data: {
                 suggestedTip: baseTip,
                 suggestedTips,
-                finalFare: ride.finalFare,
+                finalFare: personalFare,
             },
         });
     } catch (error) {

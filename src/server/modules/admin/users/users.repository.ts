@@ -84,6 +84,7 @@ export async function createUser(data: CreateUserDTO) {
                         carPlate: data.driverInfo.carPlate,
                         carColor: data.driverInfo.carColor,
                         carYear: data.driverInfo.carYear,
+                        serviceType: data.driverInfo.serviceType ?? "STANDARD",
                         isApproved: false, // Needs approval
                     },
                 }

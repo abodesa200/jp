@@ -132,6 +132,8 @@ model Driver {
   carColor String?
   carYear  Int?
 
+  serviceType ServiceType @default(STANDARD)
+
   commissionRate Decimal @default(0.20)
 
   isApproved Boolean      @default(false)
@@ -412,6 +414,9 @@ model RidePassenger {
   dropoffAddress  String?
 
   fare Decimal?
+
+  tip            Decimal?  @default(0)
+  tipSubmittedAt DateTime?
 
   joinedAt DateTime @default(now())
 

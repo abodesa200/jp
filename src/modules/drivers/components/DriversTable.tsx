@@ -4,8 +4,9 @@ import { DataTable } from "@/components/shared/DataTable";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Check, Eye, Star, Trash2, X } from "lucide-react";
+import { Check, Eye, Pencil, Star, Trash2, X } from "lucide-react";
 import Link from "next/link";
+import { getServiceTypeLabel } from "../constants";
 import { Driver } from "../types";
 
 interface DriversTableProps {
@@ -19,6 +20,7 @@ interface DriversTableProps {
     onPageChange: (page: number) => void;
     onToggleApproval: (id: number, currentStatus: boolean) => void;
     onDelete: (id: number) => void;
+    onEdit: (driver: Driver) => void;
 }
 
 export function DriversTable({
@@ -28,6 +30,7 @@ export function DriversTable({
     onPageChange,
     onToggleApproval,
     onDelete,
+    onEdit,
 }: DriversTableProps) {
     const columns = [
         {
@@ -81,6 +84,13 @@ export function DriversTable({
             ),
         },
         {
+            key: "category",
+            label: "Category",
+            render: (driver: Driver) => (
+                <Badge variant="outline">{getServiceTypeLabel(driver.serviceType)}</Badge>
+            ),
+        },
+        {
             key: "license",
             label: "License",
             render: (driver: Driver) => <span className="font-mono text-sm">{driver.licenseNumber}</span>,
@@ -116,6 +126,14 @@ export function DriversTable({
                         <Link href={`/admin/drivers/${driver.id}`}>
                             <Eye className="h-4 w-4" />
                         </Link>
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onEdit(driver)}
+                        title="Edit driver"
+                    >
+                        <Pencil className="h-4 w-4" />
                     </Button>
                     <Button
                         variant="ghost"

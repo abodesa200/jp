@@ -244,6 +244,8 @@ export function mapRide(
       id: number;
       clientId: number;
       fare: unknown;
+      tip?: unknown;
+      tipSubmittedAt?: Date | null;
       client?: {
         id: number;
         name: string | null;
@@ -298,6 +300,8 @@ export function mapRide(
       id: passenger.id,
       clientId: passenger.clientId,
       fare: passenger.fare != null ? Number(passenger.fare) : null,
+      tip: passenger.tip != null ? Number(passenger.tip) : null,
+      tipSubmittedAt: passenger.tipSubmittedAt ?? null,
       client: passenger.client ?? null,
     })),
 

@@ -39,6 +39,7 @@ export const updateDriverSchema = z.object({
     carPlate: z.string().min(2).optional(),
     carColor: z.string().optional(),
     carYear: z.number().int().min(1990).max(2030).optional(),
+    serviceType: z.enum(["STANDARD", "VIP", "VAN"]).optional(),
 });
 
 export type UpdateDriverDTO = z.infer<typeof updateDriverSchema>;

@@ -4,7 +4,9 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { useDrivers } from "../hooks/useDrivers";
+import type { Driver } from "../types";
 import { CreateDriverDialog } from "./CreateDriverDialog";
+import { EditDriverDialog } from "./EditDriverDialog";
 import { DriversFilters } from "./DriversFilters";
 import { DriversTable } from "./DriversTable";
 
@@ -12,6 +14,8 @@ export function DriversView() {
     const [approvedFilter, setApprovedFilter] = useState("all");
     const [searchQuery, setSearchQuery] = useState("");
     const [createDialogOpen, setCreateDialogOpen] = useState(false);
+    const [editDialogOpen, setEditDialogOpen] = useState(false);
+    const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
 
     const {
         drivers,
@@ -46,6 +50,11 @@ export function DriversView() {
         updateParams({ page });
     };
 
+    const handleEditDriver = (driver: Driver) => {
+        setSelectedDriver(driver);
+        setEditDialogOpen(true);
+    };
+
     return (
         <div className="space-y-6">
             <PageHeader
@@ -61,6 +70,13 @@ export function DriversView() {
             <CreateDriverDialog
                 open={createDialogOpen}
                 onOpenChange={setCreateDialogOpen}
+                onSuccess={() => refetch()}
+            />
+
+            <EditDriverDialog
+                open={editDialogOpen}
+                onOpenChange={setEditDialogOpen}
+                driver={selectedDriver}
                 onSuccess={() => refetch()}
             />
 
@@ -83,6 +99,7 @@ export function DriversView() {
                 onPageChange={handlePageChange}
                 onToggleApproval={toggleApproval}
                 onDelete={deleteDriver}
+                onEdit={handleEditDriver}
             />
         </div>
     );

@@ -132,17 +132,32 @@ export async function acceptRideService(payload: Payload, rideId: string) {
         throw new ForbiddenError("Driver not approved");
     }
 
-    const result = await statusRepository.acceptRide(Number(rideId), driver.id);
+    const ride = await statusRepository.findRideById(Number(rideId));
+
+    if (!ride) throw new NotFoundError("Ride not found");
+
+    const isCarpooling = ride.rideMode === "CARPOOLING";
+
+    if (!isCarpooling && ride.serviceType !== driver.serviceType) {
+        throw new ForbiddenError("This ride does not match your vehicle category");
+    }
+
+    const result = await statusRepository.acceptRide(
+        Number(rideId),
+        driver.id,
+        driver.serviceType,
+        { allowAnyCategory: isCarpooling },
+    );
 
     if (result.count === 0) {
         throw new ConflictError("Ride already taken or invalid state");
     }
 
-    const ride = await findRideWithDetails(Number(rideId));
+    const rideWithDetails = await findRideWithDetails(Number(rideId));
 
-    if (!ride) throw new NotFoundError("Ride not found");
+    if (!rideWithDetails) throw new NotFoundError("Ride not found");
 
-    const mapped = mapRide(ride);
+    const mapped = mapRide(rideWithDetails);
 
     emitSocketEvent(`ride:${rideId}`, "ride:accepted", {
         ride: mapped,

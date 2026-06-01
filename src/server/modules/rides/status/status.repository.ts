@@ -1,3 +1,4 @@
+import { ServiceType } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 
 // ─────────────────────────────────────────────
@@ -30,12 +31,18 @@ export async function updateRideStatus(rideId: number, data: any) {
 // Accept Ride (Atomic)
 // ─────────────────────────────────────────────
 
-export async function acceptRide(rideId: number, driverId: number) {
+export async function acceptRide(
+    rideId: number,
+    driverId: number,
+    serviceType: ServiceType,
+    options?: { allowAnyCategory?: boolean },
+) {
     return prisma.ride.updateMany({
         where: {
             id: rideId,
             status: "REQUESTED",
             driverId: null,
+            ...(options?.allowAnyCategory ? {} : { serviceType }),
         },
         data: {
             driverId,

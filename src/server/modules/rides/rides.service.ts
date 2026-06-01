@@ -5,7 +5,7 @@ import {
     ForbiddenError,
     NotFoundError,
 } from "@/server/core/http/http-errors";
-import { emitSocketEvent } from "@/server/lib/socket/emit";
+import { emitRideCreatedToMatchingDrivers } from "@/server/lib/socket/driver-rooms";
 import * as ridesRepository from "./rides.repository";
 import { CreateRideDTO, GetNearbyRidesQueryDTO, GetRidesQueryDTO } from "./rides.schema";
 import {
@@ -184,12 +184,13 @@ export async function createRideService(
     // 6. Emit event
     // ─────────────────────────────
 
-    emitSocketEvent("drivers", "ride:created", {
-        ride: mapRide(rideWithPassengers ?? ride),
-    });
+    const mappedRide = mapRide(rideWithPassengers ?? ride);
+
+    // Notify only drivers whose vehicle category matches the ride type
+    await emitRideCreatedToMatchingDrivers(mappedRide, { ride: mappedRide });
 
     return {
-        ride: mapRide(rideWithPassengers ?? ride),
+        ride: mappedRide,
     };
 }
 // ─────────────────────────────────────────────
@@ -235,15 +236,20 @@ export async function getNearbyRidesService(
         throw new ForbiddenError("Driver account is not approved yet");
     }
 
-    if (!driver.latitude || !driver.longitude) {
-        throw new BadRequestError(
-            "Driver location not available. Please update your location.",
-        );
-    }
-
     const { maxDistance, limit } = query;
 
-    const availableRides = await ridesRepository.getAvailableRides();
+    const availableRides = await ridesRepository.getAvailableRides(driver.serviceType);
+
+    if (!driver.latitude || !driver.longitude) {
+        return {
+            rides: availableRides.slice(0, limit),
+            driverLocation: null,
+            filters: {
+                maxDistance,
+                limit,
+            },
+        };
+    }
 
     const ridesWithDistance = availableRides
         .map((ride) => {

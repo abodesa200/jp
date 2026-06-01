@@ -133,5 +133,11 @@ export async function verifyOtpService(data: VerifyOtpDTO) {
             role: user.role,
             isVerified: user.isVerified,
         },
+        driver: user.driver
+            ? {
+                  id: user.driver.id,
+                  serviceType: user.driver.serviceType,
+              }
+            : null,
     };
 }

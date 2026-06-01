@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EditDriverDialog } from "@/modules/drivers/components/EditDriverDialog";
+import { getServiceTypeLabel } from "@/modules/drivers/constants";
 import useGetDriverInfo from "@/modules/drivers/hooks/useGetDriverInfo";
 import type { Driver } from "@/modules/drivers/types";
 import {
@@ -157,7 +158,7 @@ export default function DriverDetailPage() {
             disabled={actionLoading}
           >
             <Pencil className="h-4 w-4 mr-2" />
-            Edit
+            تعديل
           </Button>
           <Button
             variant={driver.isApproved ? "outline" : "default"}
@@ -310,6 +311,7 @@ export default function DriverDetailPage() {
           </CardHeader>
           <CardContent className="divide-y">
             <InfoRow label="Car Model" value={driver.carModel} />
+            <InfoRow label="فئة المركبة" value={getServiceTypeLabel(driver.serviceType)} />
             <InfoRow
               label="License Plate"
               value={

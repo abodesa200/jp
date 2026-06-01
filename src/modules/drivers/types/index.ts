@@ -19,6 +19,7 @@ export interface Driver {
     carPlate: string;
     carColor: string | null;
     carYear: number | null;
+    serviceType: "STANDARD" | "VIP" | "VAN";
     isApproved: boolean;
     isOnline: boolean;
     latitude: number | null;
