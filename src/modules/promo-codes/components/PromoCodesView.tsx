@@ -130,7 +130,6 @@ export function PromoCodesView() {
     const activeCount = promoCodes.filter((p) => p.isActive && !isExpired(p.expiresAt)).length;
     const expiredCount = promoCodes.filter((p) => isExpired(p.expiresAt)).length;
     const totalUses = promoCodes.reduce((sum, p) => sum + p.currentUses, 0);
-
     return (
         <div className="space-y-6">
             <PageHeader
@@ -143,7 +142,7 @@ export function PromoCodesView() {
                 }}
             />
 
-            <div className="grid gap-4 sm:grid-cols-3">
+            {/* <div className="grid gap-4 sm:grid-cols-3">
                 <StatCard
                     title="Active Codes"
                     value={activeCount}
@@ -165,7 +164,7 @@ export function PromoCodesView() {
                     variant="warning"
                     description="Expired codes"
                 />
-            </div>
+            </div> */}
 
             <Card>
                 <CardHeader className="pb-4">

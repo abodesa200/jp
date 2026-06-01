@@ -54,8 +54,7 @@ export function StatsGrid({ stats }: StatsGridProps) {
                 />
                 <StatCard
                     title="Total Revenue"
-                    value={`$${stats?.overview?.totalRevenue.toFixed(2)}`}
-                    icon={DollarSign}
+                    value={`$${Number(stats?.overview?.totalRevenue ?? 0).toFixed(2)}`} icon={DollarSign}
                     variant="warning"
                 />
             </div>

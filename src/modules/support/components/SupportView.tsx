@@ -69,7 +69,7 @@ function TicketDetailDialog({
                         <div>
                             <p className="text-sm font-medium">{ticket.user.name ?? "Unknown"}</p>
                             <p className="text-xs text-muted-foreground">
-                                {ticket.user.email ?? ticket.user.phone ?? "-"} • {ticket.user.role}
+                                {ticket.user.email ?? ticket.user.phone ?? "-"} â€¢ {ticket.user.role}
                             </p>
                         </div>
                         <Badge

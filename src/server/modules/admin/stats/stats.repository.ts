@@ -52,12 +52,12 @@ export async function getDashboardStats() {
         prisma.driver.count({ where: { isApproved: false } }),
 
         // Online drivers
-        prisma.driver.count({ where: { isOnline: true, isApproved: true } }),
+        prisma.driver.count({ where: { status: "ONLINE", isApproved: true } }),
 
         // Total revenue
         prisma.ride.aggregate({
             where: { status: "COMPLETED" },
-            _sum: { fare: true },
+            _sum: { finalFare: true },
         }),
 
         // Recent users (last 7 days)
@@ -121,7 +121,7 @@ export async function getDashboardStats() {
             cancelledRides: clientCancelledRides + driverCancelledRides,
             pendingDrivers,
             onlineDrivers,
-            totalRevenue: totalRevenue._sum.fare || 0,
+            totalRevenue: totalRevenue._sum.finalFare || 0,
         },
         recent: {
             users: recentUsers,
@@ -167,8 +167,8 @@ export async function getDriverStats() {
         prisma.driver.count(),
         prisma.driver.count({ where: { isApproved: true } }),
         prisma.driver.count({ where: { isApproved: false } }),
-        prisma.driver.count({ where: { isOnline: true, isApproved: true } }),
-        prisma.driver.count({ where: { isOnline: false, isApproved: true } }),
+        prisma.driver.count({ where: { status: "ONLINE", isApproved: true } }),
+        prisma.driver.count({ where: { status: "OFFLINE", isApproved: true } }),
     ]);
 
     return {
@@ -231,27 +231,27 @@ export async function getRevenueStats() {
     const [total, daily, weekly, monthly] = await Promise.all([
         prisma.ride.aggregate({
             where: { status: "COMPLETED" },
-            _sum: { fare: true },
+            _sum: { finalFare: true },
         }),
         prisma.ride.aggregate({
             where: { status: "COMPLETED", completedAt: { gte: today } },
-            _sum: { fare: true },
+            _sum: { finalFare: true },
         }),
         prisma.ride.aggregate({
             where: { status: "COMPLETED", completedAt: { gte: thisWeek } },
-            _sum: { fare: true },
+            _sum: { finalFare: true },
         }),
         prisma.ride.aggregate({
             where: { status: "COMPLETED", completedAt: { gte: thisMonth } },
-            _sum: { fare: true },
+            _sum: { finalFare: true },
         }),
     ]);
 
     return {
-        total: total._sum.fare || 0,
-        daily: daily._sum.fare || 0,
-        weekly: weekly._sum.fare || 0,
-        monthly: monthly._sum.fare || 0,
+        total: total._sum.finalFare || 0,
+        daily: daily._sum.finalFare || 0,
+        weekly: weekly._sum.finalFare || 0,
+        monthly: monthly._sum.finalFare || 0,
     };
 }
 

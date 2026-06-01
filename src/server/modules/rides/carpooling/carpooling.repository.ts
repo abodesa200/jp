@@ -165,6 +165,16 @@ export async function getAvailableCarpoolingRides(userId: number) {
             passengers: {
                 select: {
                     id: true,
+                    clientId: true,
+                    fare: true,
+                    client: {
+                        select: {
+                            id: true,
+                            name: true,
+                            phone: true,
+                            avatarUrl: true,
+                        },
+                    },
                 },
             },
         },

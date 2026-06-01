@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import {
+  ActivityIcon,
   BarChart3,
   Bell,
   Building2,
@@ -23,11 +24,11 @@ import {
   Plus,
   Settings,
   Tag,
-  Users,
+  Users
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 const navItems = [
   {
@@ -61,9 +62,15 @@ const navItems = [
     ],
   },
   {
-    group: "System",
+    group: "Analytics",
     items: [
       { href: "/admin/reports", icon: BarChart3, label: "Reports" },
+      { href: "/admin/heatmap", icon: ActivityIcon, label: "Busy Heatmap" },
+    ],
+  },
+  {
+    group: "System",
+    items: [
       { href: "/admin/settings", icon: Settings, label: "Settings" },
     ],
   },
@@ -76,7 +83,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [collapsed, setCollapsed] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
 
-  
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -125,10 +132,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   </p>
                 )}
                 {group.items.map((item) => {
-                  const isActive = item.exact
+                  const isActive = (item as any).exact
                     ? pathname === item.href
                     : pathname.startsWith(item.href);
-                  const showBadge = item.badge === "pending" && pendingCount > 0;
+                  const showBadge = (item as any).badge === "pending" && pendingCount > 0;
 
                   const linkContent = (
                     <Link
@@ -258,10 +265,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                       {group.group}
                     </p>
                     {group.items.map((item) => {
-                      const isActive = item.exact
+                      const isActive = (item as any).exact
                         ? pathname === item.href
                         : pathname.startsWith(item.href);
-                      const showBadge = item.badge === "pending" && pendingCount > 0;
+                      const showBadge = (item as any).badge === "pending" && pendingCount > 0;
                       return (
                         <Link
                           key={item.href}
