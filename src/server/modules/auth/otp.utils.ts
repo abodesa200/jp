@@ -14,6 +14,7 @@ export function generateOtpCode(): string {
     }
 
     return Math.floor(100000 + Math.random() * 900000).toString();
+    
 }
 
 /**
@@ -40,9 +41,7 @@ export function getSecondsUntilExpiry(expiresAt: Date): number {
     return Math.ceil((expiresAt.getTime() - Date.now()) / 1000);
 }
 
-/**
- * التحقق من صلاحية OTP
- */
+
 export function isOtpValid(expiresAt: Date, used: boolean): boolean {
     return !used && expiresAt > new Date();
 }
