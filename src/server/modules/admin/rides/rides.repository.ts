@@ -73,7 +73,6 @@ export async function getRides(query: GetRidesQueryDTO) {
                 },
                 payment: true,
                 review: true,
-                negotiation: true,
             },
         }),
         prisma.ride.count({ where }),
